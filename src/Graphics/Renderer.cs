@@ -18,11 +18,12 @@ public class Renderer
         _pixel.SetData(new[] { Color.White });
     }
 
-    public void DrawTopDownView(SpriteBatch spriteBatch, WorldMap worldMap, Player player)
+    public void DrawTopDownView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit centerRayHit)
     {
         spriteBatch.Begin();
 
         DrawMap(spriteBatch, worldMap);
+        DrawRay(spriteBatch, player, centerRayHit);
         DrawPlayer(spriteBatch, player);
         DrawPlayerDirection(spriteBatch, player);
 
@@ -114,5 +115,32 @@ public class Renderer
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left, rectangle.Bottom - thickness, rectangle.Width, thickness), color);
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Left, rectangle.Top, thickness, rectangle.Height), color);
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Right - thickness, rectangle.Top, thickness, rectangle.Height), color);
+    }
+
+    private void DrawRay(SpriteBatch spriteBatch, Player player, RaycastHit raycastHit)
+    {
+        if (raycastHit == null) return;
+
+        Vector2 start = WorldToScreen(player.Position);
+        Vector2 end = WorldToScreen(raycastHit.Position);
+        Color rayColor = raycastHit.HitWall ? Color.LimeGreen : Color.Orange;
+
+        DrawLine(spriteBatch, start, end, rayColor, 2);
+
+        DrawHitMarker(spriteBatch, end, rayColor);
+    }
+
+    private void DrawHitMarker(SpriteBatch spriteBatch, Vector2 position, Color color)
+    {
+        int markerSize = 8;
+
+        Rectangle markerRectangle = new Rectangle(
+            (int)position.X - markerSize / 2,
+            (int)position.Y - markerSize / 2,
+            markerSize,
+            markerSize
+        );
+
+        spriteBatch.Draw(_pixel, markerRectangle, color);
     }
 }
