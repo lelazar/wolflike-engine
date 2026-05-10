@@ -18,64 +18,18 @@ public class Renderer
         _pixel.SetData(new[] { Color.White });
     }
 
-    public void DrawTopDownView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit centerRayHit)
+    public void DrawTopDownView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
     {
-        spriteBatch.Begin();
+        // Because we are using transparent colors in DrawRays(): new Color(0, 180, 80, 120)
+        // We need alpha blending to be enabled. Usually the Begin() function uses it by default, but we should enable it explicitly
+        spriteBatch.Begin(blendState: BlendState.AlphaBlend);
 
         DrawMap(spriteBatch, worldMap);
-        DrawRay(spriteBatch, player, centerRayHit);
+        DrawRays(spriteBatch, player, rayHits);
         DrawPlayer(spriteBatch, player);
         DrawPlayerDirection(spriteBatch, player);
 
         spriteBatch.End();
-    }
-
-    private void DrawPlayerDirection(SpriteBatch spriteBatch, Player player)
-    {
-        Vector2 start = WorldToScreen(player.Position);
-
-        Vector2 direction = new Vector2(
-            MathF.Cos(player.Angle),
-            MathF.Sin(player.Angle)
-        );
-
-        Vector2 end = start + direction * 32f;
-
-        DrawLine(spriteBatch, start, end, Color.Yellow, 3);
-    }
-
-    private void DrawLine(SpriteBatch spriteBatch, Vector2 start, Vector2 end, Color color, int thickness)
-    {
-        Vector2 edge = end - start;
-
-        float angle = MathF.Atan2(edge.Y, edge.X);
-
-        Rectangle lineRectangle = new Rectangle(
-            (int)start.X,
-            (int)start.Y,
-            (int)edge.Length(),
-            thickness
-        );
-
-        spriteBatch.Draw(_pixel, lineRectangle, null, color, angle, Vector2.Zero, SpriteEffects.None, 0);
-    }
-
-    private Vector2 WorldToScreen(Vector2 worldPosition) => worldPosition * TILESIZE;
-
-    private void DrawPlayer(SpriteBatch spriteBatch, Player player)
-    {
-        int playerSize = 12;
-
-        Vector2 screenPosition = WorldToScreen(player.Position);
-
-        Rectangle playerRectangle = new Rectangle(
-            (int)screenPosition.X - playerSize / 2,
-            (int)screenPosition.Y - playerSize / 2,
-            playerSize,
-            playerSize
-        );
-
-        spriteBatch.Draw(_pixel, playerRectangle, Color.Red);
     }
 
     private void DrawMap(SpriteBatch spriteBatch, WorldMap worldMap)
@@ -107,6 +61,77 @@ public class Renderer
         }
     }
 
+    private void DrawRays(SpriteBatch spriteBatch, Player player, RaycastHit[] rayHits)
+    {
+        if (rayHits == null) return;
+
+        Vector2 start = WorldToScreen(player.Position);
+
+        int centerIndex = rayHits.Length / 2;
+
+        // At the moment, the center ray cannot be seen, so modify it below
+        //foreach (RaycastHit r in rayHits)
+        //{
+        //    if (r == null) continue;
+
+        //    Vector2 end = WorldToScreen(r.Position);
+
+        //    Color rayColor = r.HitWall ? new Color(0, 180, 80, 120) : new Color(255, 165, 0, 120);
+
+        //    DrawLine(spriteBatch, start, end, rayColor, 1);
+        //}
+
+        // So this gives me green FOV rays and yellow center ray
+        for (int i = 0; i < rayHits.Length; i++)
+        {
+            RaycastHit rayHit = rayHits[i];
+
+            if (rayHit == null) continue;
+
+            Vector2 end = WorldToScreen(rayHit.Position);
+
+            bool isCenterRay = i == centerIndex;
+
+            Color rayColor = isCenterRay ? Color.Yellow : new Color(0, 180, 80, 100);
+
+            int thickness = isCenterRay ? 2 : 1;
+
+            DrawLine(spriteBatch, start, end, rayColor, thickness);
+        }
+    }
+
+    private void DrawPlayer(SpriteBatch spriteBatch, Player player)
+    {
+        int playerSize = 12;
+
+        Vector2 screenPosition = WorldToScreen(player.Position);
+
+        Rectangle playerRectangle = new Rectangle(
+            (int)screenPosition.X - playerSize / 2,
+            (int)screenPosition.Y - playerSize / 2,
+            playerSize,
+            playerSize
+        );
+
+        spriteBatch.Draw(_pixel, playerRectangle, Color.Red);
+    }
+
+    private void DrawPlayerDirection(SpriteBatch spriteBatch, Player player)
+    {
+        Vector2 start = WorldToScreen(player.Position);
+
+        Vector2 direction = new Vector2(
+            MathF.Cos(player.Angle),
+            MathF.Sin(player.Angle)
+        );
+
+        Vector2 end = start + direction * 32f;
+
+        DrawLine(spriteBatch, start, end, Color.Yellow, 3);
+    }
+
+    private Vector2 WorldToScreen(Vector2 worldPosition) => worldPosition * TILESIZE;
+
     private void DrawRectangleBorder(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
     {
         int thickness = 1;
@@ -117,20 +142,23 @@ public class Renderer
         spriteBatch.Draw(_pixel, new Rectangle(rectangle.Right - thickness, rectangle.Top, thickness, rectangle.Height), color);
     }
 
-    private void DrawRay(SpriteBatch spriteBatch, Player player, RaycastHit raycastHit)
+    private void DrawLine(SpriteBatch spriteBatch, Vector2 start, Vector2 end, Color color, int thickness)
     {
-        if (raycastHit == null) return;
+        Vector2 edge = end - start;
 
-        Vector2 start = WorldToScreen(player.Position);
-        Vector2 end = WorldToScreen(raycastHit.Position);
-        Color rayColor = raycastHit.HitWall ? Color.LimeGreen : Color.Orange;
+        float angle = MathF.Atan2(edge.Y, edge.X);
 
-        DrawLine(spriteBatch, start, end, rayColor, 2);
+        Rectangle lineRectangle = new Rectangle(
+            (int)start.X,
+            (int)start.Y,
+            (int)edge.Length(),
+            thickness
+        );
 
-        DrawHitMarker(spriteBatch, end, rayColor);
+        spriteBatch.Draw(_pixel, lineRectangle, null, color, angle, Vector2.Zero, SpriteEffects.None, 0);
     }
 
-    private void DrawHitMarker(SpriteBatch spriteBatch, Vector2 position, Color color)
+    /*private void DrawHitMarker(SpriteBatch spriteBatch, Vector2 position, Color color)
     {
         int markerSize = 8;
 
@@ -142,5 +170,5 @@ public class Renderer
         );
 
         spriteBatch.Draw(_pixel, markerRectangle, color);
-    }
+    }*/
 }
