@@ -2,6 +2,17 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.6] - Field-of-View Rays
+
+### Added
+- Added multiple raycasting across a 60-degree field of view
+- Added top-down field-of-view debug visualization
+- Added configurable ray count
+- Added transparent ray rendering
+
+### Changed
+- Replaced single center ray storage with ray hit array
+
 ## [v0.4] - Player Movement and Collision
 
 ### Added
