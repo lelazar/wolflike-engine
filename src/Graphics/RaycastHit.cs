@@ -14,6 +14,7 @@ public class RaycastHit
     public bool HitWall { get; set; }
     public Vector2 Position { get; set; }
     public float Distance { get; set; }
+    public float Angle { get; set; }
     public int MapX { get; set; }
     public int MapY { get; set; }
 }

@@ -12,24 +12,99 @@ public class Renderer
 
     private const int TILESIZE = 48;
 
+    private const int SCREENWIDTH = 1280;
+    private const int SCREENHEIGHT = 720;
+
     public void LoadContent(GraphicsDevice graphicsDevice)
     {
         _pixel = new Texture2D(graphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
     }
 
-    public void DrawTopDownView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
     {
-        // Because we are using transparent colors in DrawRays(): new Color(0, 180, 80, 120)
-        // We need alpha blending to be enabled. Usually the Begin() function uses it by default, but we should enable it explicitly
         spriteBatch.Begin(blendState: BlendState.AlphaBlend);
 
+        DrawCeilingAndFloor(spriteBatch);
+        DrawWallSlices(spriteBatch, player, rayHits);
+
+        // Small debug minimap in the top-left corner
+        //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
+
+        spriteBatch.End();
+    }
+
+    private void DrawCeilingAndFloor(SpriteBatch spriteBatch)
+    {
+        Rectangle ceilingRectangle = new Rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT / 2);
+        Rectangle floorRectangle = new Rectangle(0, SCREENHEIGHT / 2, SCREENWIDTH, SCREENHEIGHT / 2);
+
+        spriteBatch.Draw(_pixel, ceilingRectangle, new Color(30, 30, 45));
+        spriteBatch.Draw(_pixel, floorRectangle, new Color(45, 45, 45));
+    }
+
+    private void DrawWallSlices(SpriteBatch spriteBatch, Player player, RaycastHit[] rayHits)
+    {
+        if (rayHits == null || rayHits.Length == 0) return;
+
+        int rayCount = rayHits.Length;
+        float sliceWidth = (float)SCREENWIDTH / rayCount;  // Controls how wide each vertical slice is. If SCREENWIDTH=1280, rayCount=320 then sliceWidth = 4 pixels
+        // So every ray draws a 4-pixel-wide vertical wall column
+
+        for (int i = 0; i < rayCount; i++)
+        {
+            RaycastHit rayHit = rayHits[i];
+
+            if (rayHit == null || !rayHit.HitWall) continue;
+
+            // Without correction, the left and right sides of the screen look distorted because those rays travel diagonally
+            // So let's correct the distance with fish-eye correction
+            float correctedDistance = CorrectFishEye(rayHit.Distance, rayHit.Angle, player.Angle);  // This avoids the classic fish-eye distortion
+            // Without it, a flat wall in front of us may look curved. With it, walls look much more stable
+
+            if (correctedDistance < 0.0001f)
+                correctedDistance = 0.0001f;
+
+            // The heart of the renderer
+            float wallHeight = SCREENHEIGHT / correctedDistance;  // Objects closer to the camera appear larger. For example dist1 -> 720/1 = 720 pixels tall, dist2 -> 720/2 = 360 pixels tall
+            // With this, we can create the 3D illusion
+
+            int sliceX = (int)(i * sliceWidth);
+            int sliceHeight = (int)wallHeight;
+            int sliceY = SCREENHEIGHT / 2 - sliceHeight / 2;
+
+            Rectangle wallSliceRectangle = new Rectangle(sliceX, sliceY, (int)MathF.Ceiling(sliceWidth) + 1, sliceHeight);
+
+            Color wallColor = GetWallColor(correctedDistance);
+
+            spriteBatch.Draw(_pixel, wallSliceRectangle, wallColor);
+        }
+    }
+
+    private float CorrectFishEye(float rawDistance, float rayAngle, float playerAngle)
+    {
+        float angleDifference = rayAngle - playerAngle;
+
+        return rawDistance * MathF.Cos(angleDifference);
+    }
+
+    private Color GetWallColor(float distance)
+    {
+        float brightness = 1.0f / (1.0f + distance * 0.15f);
+
+        brightness = MathHelper.Clamp(brightness, 0.15f, 1.0f);
+
+        byte value = (byte)(200 * brightness);
+
+        return new Color(value, value, value);
+    }
+
+    private void DrawMiniMap(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
+    {
         DrawMap(spriteBatch, worldMap);
         DrawRays(spriteBatch, player, rayHits);
         DrawPlayer(spriteBatch, player);
         DrawPlayerDirection(spriteBatch, player);
-
-        spriteBatch.End();
     }
 
     private void DrawMap(SpriteBatch spriteBatch, WorldMap worldMap)
@@ -42,8 +117,8 @@ public class Renderer
 
                 Color color = tile switch
                 {
-                    0 => new Color(35, 35, 35),
-                    1 => new Color(180, 180, 180),
+                    0 => new Color(35, 35, 35, 220),
+                    1 => new Color(180, 180, 180, 220),
                     _ => Color.Magenta
                 };
 
@@ -70,16 +145,6 @@ public class Renderer
         int centerIndex = rayHits.Length / 2;
 
         // At the moment, the center ray cannot be seen, so modify it below
-        //foreach (RaycastHit r in rayHits)
-        //{
-        //    if (r == null) continue;
-
-        //    Vector2 end = WorldToScreen(r.Position);
-
-        //    Color rayColor = r.HitWall ? new Color(0, 180, 80, 120) : new Color(255, 165, 0, 120);
-
-        //    DrawLine(spriteBatch, start, end, rayColor, 1);
-        //}
 
         // So this gives me green FOV rays and yellow center ray
         for (int i = 0; i < rayHits.Length; i++)
@@ -157,18 +222,4 @@ public class Renderer
 
         spriteBatch.Draw(_pixel, lineRectangle, null, color, angle, Vector2.Zero, SpriteEffects.None, 0);
     }
-
-    /*private void DrawHitMarker(SpriteBatch spriteBatch, Vector2 position, Color color)
-    {
-        int markerSize = 8;
-
-        Rectangle markerRectangle = new Rectangle(
-            (int)position.X - markerSize / 2,
-            (int)position.Y - markerSize / 2,
-            markerSize,
-            markerSize
-        );
-
-        spriteBatch.Draw(_pixel, markerRectangle, color);
-    }*/
 }

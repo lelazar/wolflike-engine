@@ -34,6 +34,7 @@ public class Raycaster
                     HitWall = true,
                     Position = currentPosition,
                     Distance = distance,
+                    Angle = angle,
                     MapX = mapX,
                     MapY = mapY
                 };
@@ -49,6 +50,7 @@ public class Raycaster
             HitWall = false,
             Position = endPosition,
             Distance = MAXDISTANCE,
+            Angle = angle,
             MapX = (int)endPosition.X,
             MapY = (int)endPosition.Y
         };

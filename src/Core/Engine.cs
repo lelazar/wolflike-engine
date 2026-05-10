@@ -21,7 +21,7 @@ public class Engine
     // Later, for 3D rendering, I will probably use something closer to the screen width or a reduced logical render resolution
     // For example: private const int RAYCOUNT = 320 or 640;
     // But do not increase it too much yet, because the current raycaster is a simple step-based raycaster
-    private const int RAYCOUNT = 90;  // Controls how many rays are cast
+    private const int RAYCOUNT = 320;  // Controls how many rays are cast (TODO: Increase it to 640 for a sharper image)
 
     /* Field of View */
     // In radians: PI radians = 180 degrees, so PI / 3 = 60 degrees
@@ -59,16 +59,17 @@ public class Engine
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        _renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
+        //_renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits);
     }
 
     // Calculating many ray angles
     private void CastFieldOfViewRays()
     {
         float startAngle = _player.Angle - FIELDOFVIEW / 2.0f;  // Starts the first ray on the left side of the player's view
-        float angleStep = FIELDOFVIEW / (RAYCOUNT - 1);  // How much angle difference exists between each ray
+        float angleStep = FIELDOFVIEW / (_rayHits.Length - 1);  // How much angle difference exists between each ray
 
-        for (int i = 0; i < RAYCOUNT; i++)
+        for (int i = 0; i < _rayHits.Length; i++)
         {
             float rayAngle = startAngle + i * angleStep;  // Calculates the actual angle for each ray
             // For example if Player angle = 0 degrees, FOV = 60 degrees, then the rays go approx. from -30 degrees to +30 degrees
