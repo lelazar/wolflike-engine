@@ -2,6 +2,18 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.7] - Basic 2.5D Wall Renderer
+
+### Added
+- Added fake-3D wall slice rendering
+- Added ceiling and floor background
+- Added fish-eye distance correction
+- Added top-left minimap overlay (I commented out the drawing of the minimap for testing)
+- Increased ray count for smoother projection
+
+### Changed
+- Renderer now draws the main raycasted first-person view instead of only the top-down debug view
+
 ## [v0.6] - Field-of-View Rays
 
 ### Added
