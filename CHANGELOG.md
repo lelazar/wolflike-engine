@@ -2,6 +2,19 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.8] - Wall Side Coloring and Depth Shading
+
+### Added
+- Added wall hit side detection
+- Added side-based wall brightness
+- Added distance-based wall shading
+- Added support for multiple wall tile colors
+- Added tile ID storage to raycast results
+
+### Changed
+- Improved fake-3D wall readability
+- Simplified main raycast view by keeping the minimap optional
+
 ## [v0.7] - Basic 2.5D Wall Renderer
 
 ### Added
