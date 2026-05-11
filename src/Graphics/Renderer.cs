@@ -39,8 +39,8 @@ public class Renderer
         Rectangle ceilingRectangle = new Rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT / 2);
         Rectangle floorRectangle = new Rectangle(0, SCREENHEIGHT / 2, SCREENWIDTH, SCREENHEIGHT / 2);
 
-        spriteBatch.Draw(_pixel, ceilingRectangle, new Color(30, 30, 45));
-        spriteBatch.Draw(_pixel, floorRectangle, new Color(45, 45, 45));
+        spriteBatch.Draw(_pixel, ceilingRectangle, new Color(22, 24, 38));
+        spriteBatch.Draw(_pixel, floorRectangle, new Color(38, 38, 42));
     }
 
     private void DrawWallSlices(SpriteBatch spriteBatch, Player player, RaycastHit[] rayHits)
@@ -75,7 +75,7 @@ public class Renderer
 
             Rectangle wallSliceRectangle = new Rectangle(sliceX, sliceY, (int)MathF.Ceiling(sliceWidth) + 1, sliceHeight);
 
-            Color wallColor = GetWallColor(correctedDistance);
+            Color wallColor = GetWallColor(rayHit, correctedDistance);
 
             spriteBatch.Draw(_pixel, wallSliceRectangle, wallColor);
         }
@@ -88,15 +88,52 @@ public class Renderer
         return rawDistance * MathF.Cos(angleDifference);
     }
 
-    private Color GetWallColor(float distance)
+    private Color GetWallColor(RaycastHit rayHit, float correctedDistance)
     {
-        float brightness = 1.0f / (1.0f + distance * 0.15f);
+        Color baseColor = GetBaseWallColor(rayHit.TileId);
 
-        brightness = MathHelper.Clamp(brightness, 0.15f, 1.0f);
+        float sideBrightness = rayHit.HitSide switch
+        {
+            WallHitSide.Vertical => 1.00f,
+            WallHitSide.Horizontal => 0.72f,
+            _ => 1.00f
+        };
 
-        byte value = (byte)(200 * brightness);
+        float distanceBrightness = GetDistanceBrightness(correctedDistance);
 
-        return new Color(value, value, value);
+        float finalBrightness = sideBrightness * distanceBrightness;
+
+        return ApplyBrightness(baseColor, finalBrightness);
+    }
+
+    private Color GetBaseWallColor(int tileId)
+    {
+        return tileId switch
+        {
+            1 => new Color(170, 170, 190),
+            2 => new Color(170, 80, 80),
+            3 => new Color(80, 140, 190),
+            _ => new Color(200, 200, 200)
+        };
+    }
+
+    private float GetDistanceBrightness(float distance)
+    {
+        float brightness = 1.0f / (1.0f + distance * 0.12f);
+
+        return MathHelper.Clamp(brightness, 0.18f, 1.0f);
+    }
+
+    private Color ApplyBrightness(Color color, float brightness)
+    {
+        brightness = MathHelper.Clamp(brightness, 0.0f, 1.0f);
+
+        return new Color(
+            (byte)(color.R * brightness),
+            (byte)(color.G * brightness),
+            (byte)(color.B * brightness),
+            color.A
+        );
     }
 
     private void DrawMiniMap(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
@@ -119,6 +156,8 @@ public class Renderer
                 {
                     0 => new Color(35, 35, 35, 220),
                     1 => new Color(180, 180, 180, 220),
+                    2 => new Color(180, 80, 80, 220),
+                    3 => new Color(80, 140, 190, 220),
                     _ => Color.Magenta
                 };
 
@@ -157,7 +196,7 @@ public class Renderer
 
             bool isCenterRay = i == centerIndex;
 
-            Color rayColor = isCenterRay ? Color.Yellow : new Color(0, 180, 80, 100);
+            Color rayColor = isCenterRay ? Color.Yellow : new Color(0, 180, 80, 90);
 
             int thickness = isCenterRay ? 2 : 1;
 

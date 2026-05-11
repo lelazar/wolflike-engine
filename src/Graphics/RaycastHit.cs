@@ -17,4 +17,6 @@ public class RaycastHit
     public float Angle { get; set; }
     public int MapX { get; set; }
     public int MapY { get; set; }
+    public int TileId { get; set; }           // Allowing us to color different wall types
+    public WallHitSide HitSide { get; set; }  // Allowing us to shade different wall sides differently
 }

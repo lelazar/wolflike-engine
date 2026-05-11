@@ -27,7 +27,9 @@ public class Raycaster
             int mapX = (int)currentPosition.X;
             int mapY = (int)currentPosition.Y;
 
-            if (worldMap.IsWall(mapX, mapY))
+            int tileId = worldMap.GetTile(mapX, mapY);
+
+            if (tileId > 0)
             {
                 return new RaycastHit
                 {
@@ -36,7 +38,9 @@ public class Raycaster
                     Distance = distance,
                     Angle = angle,
                     MapX = mapX,
-                    MapY = mapY
+                    MapY = mapY,
+                    TileId = tileId,
+                    HitSide = DetermineHitSide(currentPosition)  // Because the world is tile-based, a wall tile has grid boundaries. The ray enters a wall tile near one of those boundaries
                 };
             }
 
@@ -52,7 +56,31 @@ public class Raycaster
             Distance = MAXDISTANCE,
             Angle = angle,
             MapX = (int)endPosition.X,
-            MapY = (int)endPosition.Y
+            MapY = (int)endPosition.Y,
+            TileId = 0,
+            HitSide = WallHitSide.None
         };
+    }
+
+    /// <summary>
+    /// Check whether the hit point is closer to:
+    ///     - left/right tile boundary  -> vertical side
+    ///     - top/bottom tile boundary  -> horizontal side
+    /// Again, this is an approximation. Later the DDA algorithm will give us this perfectly!
+    /// </summary>
+    /// <param name="hitPosition"></param>
+    /// <returns></returns>
+    private WallHitSide DetermineHitSide(Vector2 hitPosition)
+    {
+        float localX = hitPosition.X - MathF.Floor(hitPosition.X);
+        float localY = hitPosition.Y - MathF.Floor(hitPosition.Y);
+
+        float distanceToVerticalGridLine = MathF.Min(localX, 1.0f - localX);
+        float distanceToHorizontalGridLine = MathF.Min(localY, 1.0f - localY);
+
+        if (distanceToVerticalGridLine < distanceToHorizontalGridLine)
+            return WallHitSide.Vertical;
+
+        return WallHitSide.Horizontal;
     }
 }
