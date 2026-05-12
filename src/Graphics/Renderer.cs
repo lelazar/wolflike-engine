@@ -9,6 +9,7 @@ namespace WolfLike.src.Graphics;
 public class Renderer
 {
     private Texture2D _pixel;
+    private TextureManager _textureManager;
 
     private const int TILESIZE = 48;
 
@@ -19,11 +20,16 @@ public class Renderer
     {
         _pixel = new Texture2D(graphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
+
+        _textureManager = new();
+        _textureManager.LoadContent(graphicsDevice);  // Now the renderer has access to wall textures
     }
 
     public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
     {
-        spriteBatch.Begin(blendState: BlendState.AlphaBlend);
+        //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
+        spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
+        // Without it, MonoGame may blur the texture columns when stretching them
 
         DrawCeilingAndFloor(spriteBatch);
         DrawWallSlices(spriteBatch, player, rayHits);
@@ -75,12 +81,77 @@ public class Renderer
             int sliceHeight = (int)wallHeight;
             int sliceY = SCREENHEIGHT / 2 - sliceHeight / 2;
 
-            Rectangle wallSliceRectangle = new Rectangle(sliceX, sliceY, (int)MathF.Ceiling(sliceWidth) + 1, sliceHeight);
+            Rectangle destinationRectangle = new Rectangle(
+                sliceX,
+                sliceY,
+                (int)MathF.Ceiling(sliceWidth) + 1,
+                sliceHeight
+            );
 
-            Color wallColor = GetWallColor(rayHit, correctedDistance);
+            DrawTexturedWallSlice(spriteBatch, rayHit, correctedDistance, destinationRectangle);
 
-            spriteBatch.Draw(_pixel, wallSliceRectangle, wallColor);
+            //Rectangle wallSliceRectangle = new Rectangle(sliceX, sliceY, (int)MathF.Ceiling(sliceWidth) + 1, sliceHeight);
+
+            //Color wallColor = GetWallColor(rayHit, correctedDistance);
+
+            //spriteBatch.Draw(_pixel, wallSliceRectangle, wallColor);
         }
+    }
+
+    private void DrawTexturedWallSlice(SpriteBatch spriteBatch, RaycastHit rayHit, float correctedDistance, Rectangle destinationRectangle)
+    {
+        Texture2D wallTexture = _textureManager.GetWallTexture(rayHit.TileId);
+
+        int textureX = GetTextureXCoordinate(rayHit, wallTexture.Width);
+
+        Rectangle sourceRectangle = new Rectangle(
+            textureX,
+            0,
+            1,
+            wallTexture.Height
+        );
+
+        Color shadeColor = GetTextureShadeColor(rayHit, correctedDistance);
+
+        spriteBatch.Draw(wallTexture, destinationRectangle, sourceRectangle, shadeColor);
+    }
+
+    // This converts: WallX 0.0 to 1.0 into: texture column 0 to textureWidth -1
+    private int GetTextureXCoordinate(RaycastHit rayHit, int textureWidth)
+    {
+        // Example with 64-pixel-wide texture:
+        // WallX = 0.00->textureX = 0
+        // WallX = 0.50->textureX = 32
+        // WallX = 0.99->textureX = 63
+
+        float wallX = rayHit.WallX;
+
+        int textureX = (int)(wallX * textureWidth);
+
+        textureX = Math.Clamp(textureX, 0, textureWidth - 1);
+
+        return textureX;
+    }
+
+    private Color GetTextureShadeColor(RaycastHit rayHit, float correctedDistance)
+    {
+        float sideBrightness = rayHit.HitSide switch
+        {
+            WallHitSide.Vertical => 1.00f,
+            WallHitSide.Horizontal => 0.68f,
+            _ => 1.00f
+        };
+
+        float distanceBrightness = GetDistanceBrightness(correctedDistance);
+
+        float finalBrightness = sideBrightness * distanceBrightness;
+
+        // In Monogame, this acts as a tint multiplier
+        // 1.0 = original texture color
+        // 0.5 = half brightness
+        // 0.2 = very dark
+        // This lets the texture keep its color while becoming darker with distance
+        return new Color(finalBrightness, finalBrightness, finalBrightness);
     }
 
     //private float CorrectFishEye(float rawDistance, float rayAngle, float playerAngle)
@@ -90,34 +161,34 @@ public class Renderer
     //    return rawDistance * MathF.Cos(angleDifference);
     //}
 
-    private Color GetWallColor(RaycastHit rayHit, float correctedDistance)
-    {
-        Color baseColor = GetBaseWallColor(rayHit.TileId);
+    //private Color GetWallColor(RaycastHit rayHit, float correctedDistance)
+    //{
+    //    Color baseColor = GetBaseWallColor(rayHit.TileId);
 
-        float sideBrightness = rayHit.HitSide switch
-        {
-            WallHitSide.Vertical => 1.00f,
-            WallHitSide.Horizontal => 0.72f,
-            _ => 1.00f
-        };
+    //    float sideBrightness = rayHit.HitSide switch
+    //    {
+    //        WallHitSide.Vertical => 1.00f,
+    //        WallHitSide.Horizontal => 0.72f,
+    //        _ => 1.00f
+    //    };
 
-        float distanceBrightness = GetDistanceBrightness(correctedDistance);
+    //    float distanceBrightness = GetDistanceBrightness(correctedDistance);
 
-        float finalBrightness = sideBrightness * distanceBrightness;
+    //    float finalBrightness = sideBrightness * distanceBrightness;
 
-        return ApplyBrightness(baseColor, finalBrightness);
-    }
+    //    return ApplyBrightness(baseColor, finalBrightness);
+    //}
 
-    private Color GetBaseWallColor(int tileId)
-    {
-        return tileId switch
-        {
-            1 => new Color(170, 170, 190),  // gray wall
-            2 => new Color(170, 80, 80),    // red wall
-            3 => new Color(80, 140, 190),   // blue wall
-            _ => new Color(200, 200, 200)
-        };
-    }
+    //private Color GetBaseWallColor(int tileId)
+    //{
+    //    return tileId switch
+    //    {
+    //        1 => new Color(170, 170, 190),  // gray wall
+    //        2 => new Color(170, 80, 80),    // red wall
+    //        3 => new Color(80, 140, 190),   // blue wall
+    //        _ => new Color(200, 200, 200)
+    //    };
+    //}
 
     private float GetDistanceBrightness(float distance)
     {
@@ -126,25 +197,25 @@ public class Renderer
         return MathHelper.Clamp(brightness, 0.18f, 1.0f);
     }
 
-    private Color ApplyBrightness(Color color, float brightness)
-    {
-        brightness = MathHelper.Clamp(brightness, 0.0f, 1.0f);
+    //private Color ApplyBrightness(Color color, float brightness)
+    //{
+    //    brightness = MathHelper.Clamp(brightness, 0.0f, 1.0f);
 
-        return new Color(
-            (byte)(color.R * brightness),
-            (byte)(color.G * brightness),
-            (byte)(color.B * brightness),
-            color.A
-        );
-    }
+    //    return new Color(
+    //        (byte)(color.R * brightness),
+    //        (byte)(color.G * brightness),
+    //        (byte)(color.B * brightness),
+    //        color.A
+    //    );
+    //}
 
-    private void DrawMiniMap(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
-    {
-        DrawMap(spriteBatch, worldMap);
-        DrawRays(spriteBatch, player, rayHits);
-        DrawPlayer(spriteBatch, player);
-        DrawPlayerDirection(spriteBatch, player);
-    }
+    //private void DrawMiniMap(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
+    //{
+    //    DrawMap(spriteBatch, worldMap);
+    //    DrawRays(spriteBatch, player, rayHits);
+    //    DrawPlayer(spriteBatch, player);
+    //    DrawPlayerDirection(spriteBatch, player);
+    //}
 
     private void DrawMap(SpriteBatch spriteBatch, WorldMap worldMap)
     {
