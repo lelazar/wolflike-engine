@@ -2,6 +2,19 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.10] - Textured Walls
+
+### Added
+- Added procedural wall texture generation
+- Added `TextureManager`
+- Added textured wall slice rendering
+- Added texture column selection using DDA `WallX`
+- Added texture tinting for side and distance shading
+
+### Changed
+- Replaced flat colored wall rectangles with textured wall slices
+- Updated raycast rendering to use point-clamped pixel-style sampling
+
 ## [v0.9] - DDA Raycasting
 
 ### Added
