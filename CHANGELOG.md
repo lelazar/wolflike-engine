@@ -2,6 +2,19 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.9] - DDA Raycasting
+
+### Added
+- Added DDA-based raycasting
+- Added exact vertical and horizontal wall side detection
+- Added wall hit coordinate data for future texture mapping
+- Added miss result handling for rays exceeding maximum distance
+
+### Changed
+- Replaced step-based ray marching with grid-based DDA traversal
+- Removed need for fish-eye correction in the renderer
+- Improved raycasting precision and performance
+
 ## [v0.8] - Wall Side Coloring and Depth Shading
 
 ### Added
