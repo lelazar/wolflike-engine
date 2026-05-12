@@ -59,8 +59,10 @@ public class Renderer
 
             // Without correction, the left and right sides of the screen look distorted because those rays travel diagonally
             // So let's correct the distance with fish-eye correction
-            float correctedDistance = CorrectFishEye(rayHit.Distance, rayHit.Angle, player.Angle);  // This avoids the classic fish-eye distortion
+            //float correctedDistance = CorrectFishEye(rayHit.Distance, rayHit.Angle, player.Angle);  // This avoids the classic fish-eye distortion
             // Without it, a flat wall in front of us may look curved. With it, walls look much more stable
+            // But now it is not needed anymore, because we are using DDA, so rayHit.Distance is already corrected!
+            float correctedDistance = rayHit.Distance;
 
             if (correctedDistance < 0.0001f)
                 correctedDistance = 0.0001f;
@@ -81,12 +83,12 @@ public class Renderer
         }
     }
 
-    private float CorrectFishEye(float rawDistance, float rayAngle, float playerAngle)
-    {
-        float angleDifference = rayAngle - playerAngle;
+    //private float CorrectFishEye(float rawDistance, float rayAngle, float playerAngle)
+    //{
+    //    float angleDifference = rayAngle - playerAngle;
 
-        return rawDistance * MathF.Cos(angleDifference);
-    }
+    //    return rawDistance * MathF.Cos(angleDifference);
+    //}
 
     private Color GetWallColor(RaycastHit rayHit, float correctedDistance)
     {
@@ -110,9 +112,9 @@ public class Renderer
     {
         return tileId switch
         {
-            1 => new Color(170, 170, 190),
-            2 => new Color(170, 80, 80),
-            3 => new Color(80, 140, 190),
+            1 => new Color(170, 170, 190),  // gray wall
+            2 => new Color(170, 80, 80),    // red wall
+            3 => new Color(80, 140, 190),   // blue wall
             _ => new Color(200, 200, 200)
         };
     }

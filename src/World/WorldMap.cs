@@ -16,12 +16,27 @@ public class WorldMap
     //    { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
     //};
 
-    // Adding more wall types to the map (0 = empty, 1 = gray, 2 = red, 3 = blue)
+    // Adding more wall types to the map (0 = empty floor, 1 = wall type 1(gray), 2 = wall type 2(red), 3 = wall type 3(blue))
+    //private readonly int[,] _tiles =
+    //{
+    //    { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+    //    { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+    //    { 1, 0, 0, 0, 2, 0, 0, 0, 0, 1 },
+    //    { 1, 0, 0, 0, 2, 0, 0, 3, 0, 1 },
+    //    { 1, 0, 0, 0, 2, 0, 0, 3, 0, 1 },
+    //    { 1, 0, 0, 0, 0, 0, 0, 3, 0, 1 },
+    //    { 1, 0, 0, 1, 1, 1, 0, 0, 0, 1 },
+    //    { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+    //    { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+    //    { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+    //};
+
+    // Better temporary test map for playing around!
     private readonly int[,] _tiles =
     {
         { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
         { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-        { 1, 0, 0, 0, 2, 0, 0, 0, 0, 1 },
+        { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
         { 1, 0, 0, 0, 2, 0, 0, 3, 0, 1 },
         { 1, 0, 0, 0, 2, 0, 0, 3, 0, 1 },
         { 1, 0, 0, 0, 0, 0, 0, 3, 0, 1 },
@@ -36,10 +51,14 @@ public class WorldMap
 
     public int GetTile(int x, int y)
     {
+        // This function treats anything outside the map as wall
+        // Even if we remove the corner wall for example, the outside of the map is still treated as solid wall
+        // So changing the bottom-right corner from 1 to 0 opens the tile inside the map, but beyond it, the engine still sees "outside world = wall"
+        // That is good behavior because it prevents the player/rays from escaping the map
         if (x < 0 || x >= Width || y < 0 || y >= Height)
             return 1;
 
-        return _tiles[y, x];
+        return _tiles[y, x];  // The first number is the row, meaning Y. The second number is the column, meaning X
     }
 
     public bool IsWall(int x, int y) => GetTile(x, y) == 1;

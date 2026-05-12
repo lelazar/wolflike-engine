@@ -32,7 +32,7 @@ public class Engine
     {
         _worldMap = new();
 
-        _player = new Player(new Vector2(3.5f, 3.5f));
+        _player = new Player(new Vector2(2.5f, 7.5f));
 
         _renderer = new();
         _raycaster = new();
