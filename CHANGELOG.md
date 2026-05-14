@@ -2,6 +2,18 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.11] - Texture Orientation and Camera Settings
+
+### Added
+- Added central `GameSettings` class
+- Added ray direction storage to raycast hit results
+- Added texture orientation correction based on hit side and ray direction
+
+### Changed
+- Moved screen size, ray count, field of view, texture size, and max ray distance into `GameSettings`
+- Updated renderer, raycaster, and texture manager to use centralized settings
+- Improved wall texture consistency when viewing walls from different sides
+
 ## [v0.10] - Textured Walls
 
 ### Added
