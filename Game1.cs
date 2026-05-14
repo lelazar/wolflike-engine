@@ -15,11 +15,12 @@ namespace WolfLike
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
+
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _graphics.PreferredBackBufferWidth = 1280;
-            _graphics.PreferredBackBufferHeight = 720;
+            _graphics.PreferredBackBufferWidth = GameSettings.SCREENWIDTH;
+            _graphics.PreferredBackBufferHeight = GameSettings.SCREENHEIGHT;
         }
 
         protected override void Initialize()

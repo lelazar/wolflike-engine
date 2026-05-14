@@ -15,9 +15,10 @@ public class RaycastHit
     public Vector2 Position { get; set; }
     public float Distance { get; set; }
     public float Angle { get; set; }
+    public Vector2 RayDirection { get; set; }  // Texture orientation depends on the direction from which the wall was hit
     public int MapX { get; set; }
     public int MapY { get; set; }
-    public int TileId { get; set; }           // Allowing us to color different wall types
-    public WallHitSide HitSide { get; set; }  // Allowing us to shade different wall sides differently
-    public float WallX { get; set; }          // Where on the wall the ray hit
+    public int TileId { get; set; }            // Allowing us to color different wall types
+    public WallHitSide HitSide { get; set; }   // Allowing us to shade different wall sides differently
+    public float WallX { get; set; }           // Where on the wall the ray hit
 }

@@ -1,6 +1,7 @@
 ﻿using WolfLike.src.World;
 using WolfLike.src.Entities;
 using WolfLike.src.Graphics;
+using WolfLike.src.Core;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
@@ -21,12 +22,12 @@ public class Engine
     // Later, for 3D rendering, I will probably use something closer to the screen width or a reduced logical render resolution
     // For example: private const int RAYCOUNT = 320 or 640;
     // But do not increase it too much yet, because the current raycaster is a simple step-based raycaster
-    private const int RAYCOUNT = 320;  // Controls how many rays are cast (TODO: Increase it to 640 for a sharper image)
+    //private const int RAYCOUNT = 320;  // Controls how many rays are cast (TODO: Increase it to 640 for a sharper image)
 
     /* Field of View */
     // In radians: PI radians = 180 degrees, so PI / 3 = 60 degrees
     // A classic FPS usually uses something around 60° to 90° so for now, 60 is good
-    private const float FIELDOFVIEW = MathF.PI / 3.0f;  // 60 degrees
+    //private const float FIELDOFVIEW = MathF.PI / 3.0f;  // 60 degrees
 
     public void Initialize()
     {
@@ -37,7 +38,7 @@ public class Engine
         _renderer = new();
         _raycaster = new();
 
-        _rayHits = new RaycastHit[RAYCOUNT];
+        _rayHits = new RaycastHit[GameSettings.RAYCOUNT];
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice)
@@ -66,8 +67,8 @@ public class Engine
     // Calculating many ray angles
     private void CastFieldOfViewRays()
     {
-        float startAngle = _player.Angle - FIELDOFVIEW / 2.0f;  // Starts the first ray on the left side of the player's view
-        float angleStep = FIELDOFVIEW / (_rayHits.Length - 1);  // How much angle difference exists between each ray
+        float startAngle = _player.Angle - GameSettings.FIELDOFVIEW / 2.0f;  // Starts the first ray on the left side of the player's view
+        float angleStep = GameSettings.FIELDOFVIEW / (_rayHits.Length - 1);  // How much angle difference exists between each ray
 
         for (int i = 0; i < _rayHits.Length; i++)
         {

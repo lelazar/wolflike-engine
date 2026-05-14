@@ -10,14 +10,12 @@ using System;
 using System.Reflection.Metadata;
 using System.Runtime.Intrinsics.X86;
 using WolfLike.src.World;
+using WolfLike.src.Core;
 
 namespace WolfLike.src.Graphics;
 
 public class Raycaster
 {
-    //private const float STEPSIZE = 0.02f; -> Not needed for DDA
-    private const float MAXDISTANCE = 20.0f;
-
     public RaycastHit CastRay(Vector2 origin, float angle, WorldMap worldMap)
     {
         Vector2 rayDirection = new Vector2(MathF.Cos(angle), MathF.Sin(angle));  // The direction where the ray travels
@@ -93,7 +91,7 @@ public class Raycaster
 
             float approximateDistance = Vector2.Distance(origin, new Vector2(mapX, mapY));
 
-            if (approximateDistance > MAXDISTANCE) return CreateMissResult(origin, rayDirection, angle);
+            if (approximateDistance > GameSettings.MAXRAYDISTANCE) return CreateMissResult(origin, rayDirection, angle);
         }
 
         float perpendicularWallDistance;
@@ -129,6 +127,7 @@ public class Raycaster
             Position = hitPosition,
             Distance = perpendicularWallDistance,
             Angle = angle,
+            RayDirection = rayDirection,
             MapX = mapX,
             MapY = mapY,
             TileId = tileId,
@@ -139,14 +138,15 @@ public class Raycaster
 
     private RaycastHit CreateMissResult(Vector2 origin, Vector2 rayDirection, float angle)
     {
-        Vector2 endPosition = origin + rayDirection * MAXDISTANCE;
+        Vector2 endPosition = origin + rayDirection * GameSettings.MAXRAYDISTANCE;
 
         return new RaycastHit
         {
             HitWall = false,
             Position = endPosition,
-            Distance = MAXDISTANCE,
+            Distance = GameSettings.MAXRAYDISTANCE,
             Angle = angle,
+            RayDirection = rayDirection,
             MapX = (int)endPosition.X,
             MapY = (int)endPosition.Y,
             TileId = 0,
@@ -154,26 +154,4 @@ public class Raycaster
             WallX = 0.0f
         };
     }
-
-    /// <summary>
-    /// Check whether the hit point is closer to:
-    ///     - left/right tile boundary  -> vertical side
-    ///     - top/bottom tile boundary  -> horizontal side
-    /// Again, this is an approximation. Later the DDA algorithm will give us this perfectly!
-    /// </summary>
-    /// <param name="hitPosition"></param>
-    /// <returns></returns>
-    //private WallHitSide DetermineHitSide(Vector2 hitPosition)
-    //{
-    //    float localX = hitPosition.X - MathF.Floor(hitPosition.X);
-    //    float localY = hitPosition.Y - MathF.Floor(hitPosition.Y);
-
-    //    float distanceToVerticalGridLine = MathF.Min(localX, 1.0f - localX);
-    //    float distanceToHorizontalGridLine = MathF.Min(localY, 1.0f - localY);
-
-    //    if (distanceToVerticalGridLine < distanceToHorizontalGridLine)
-    //        return WallHitSide.Vertical;
-
-    //    return WallHitSide.Horizontal;
-    //}
 }

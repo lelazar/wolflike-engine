@@ -7,6 +7,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using WolfLike.src.Core;
 
 namespace WolfLike.src.Graphics;
 
@@ -16,9 +17,11 @@ public class TextureManager
 
     public void LoadContent(GraphicsDevice graphicsDevice)
     {
-        _wallTextures[1] = CreateStoneTexture(graphicsDevice, 64, 64);
-        _wallTextures[2] = CreateBrickTexture(graphicsDevice, 64, 64);
-        _wallTextures[3] = CreateMetalTexture(graphicsDevice, 64, 64);
+        int size = GameSettings.TEXTURESIZE;
+
+        _wallTextures[1] = CreateStoneTexture(graphicsDevice, size, size);
+        _wallTextures[2] = CreateBrickTexture(graphicsDevice, size, size);
+        _wallTextures[3] = CreateMetalTexture(graphicsDevice, size, size);
     }
 
     public Texture2D GetWallTexture(int tileId)

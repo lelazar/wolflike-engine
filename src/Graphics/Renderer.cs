@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using WolfLike.src.Entities;
 using WolfLike.src.World;
+using WolfLike.src.Core;
 
 namespace WolfLike.src.Graphics;
 
@@ -12,9 +13,6 @@ public class Renderer
     private TextureManager _textureManager;
 
     private const int TILESIZE = 48;
-
-    private const int SCREENWIDTH = 1280;
-    private const int SCREENHEIGHT = 720;
 
     public void LoadContent(GraphicsDevice graphicsDevice)
     {
@@ -42,8 +40,8 @@ public class Renderer
 
     private void DrawCeilingAndFloor(SpriteBatch spriteBatch)
     {
-        Rectangle ceilingRectangle = new Rectangle(0, 0, SCREENWIDTH, SCREENHEIGHT / 2);
-        Rectangle floorRectangle = new Rectangle(0, SCREENHEIGHT / 2, SCREENWIDTH, SCREENHEIGHT / 2);
+        Rectangle ceilingRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT / 2);
+        Rectangle floorRectangle = new Rectangle(0, GameSettings.SCREENHEIGHT / 2, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT / 2);
 
         spriteBatch.Draw(_pixel, ceilingRectangle, new Color(22, 24, 38));
         spriteBatch.Draw(_pixel, floorRectangle, new Color(38, 38, 42));
@@ -54,7 +52,7 @@ public class Renderer
         if (rayHits == null || rayHits.Length == 0) return;
 
         int rayCount = rayHits.Length;
-        float sliceWidth = (float)SCREENWIDTH / rayCount;  // Controls how wide each vertical slice is. If SCREENWIDTH=1280, rayCount=320 then sliceWidth = 4 pixels
+        float sliceWidth = (float)GameSettings.SCREENWIDTH / rayCount;  // Controls how wide each vertical slice is. If SCREENWIDTH=1280, rayCount=320 then sliceWidth = 4 pixels
         // So every ray draws a 4-pixel-wide vertical wall column
 
         for (int i = 0; i < rayCount; i++)
@@ -74,12 +72,12 @@ public class Renderer
                 correctedDistance = 0.0001f;
 
             // The heart of the renderer
-            float wallHeight = SCREENHEIGHT / correctedDistance;  // Objects closer to the camera appear larger. For example dist1 -> 720/1 = 720 pixels tall, dist2 -> 720/2 = 360 pixels tall
+            float wallHeight = GameSettings.SCREENHEIGHT / correctedDistance;  // Objects closer to the camera appear larger. For example dist1 -> 720/1 = 720 pixels tall, dist2 -> 720/2 = 360 pixels tall
             // With this, we can create the 3D illusion
 
             int sliceX = (int)(i * sliceWidth);
             int sliceHeight = (int)wallHeight;
-            int sliceY = SCREENHEIGHT / 2 - sliceHeight / 2;
+            int sliceY = GameSettings.SCREENHEIGHT / 2 - sliceHeight / 2;
 
             Rectangle destinationRectangle = new Rectangle(
                 sliceX,
@@ -89,12 +87,6 @@ public class Renderer
             );
 
             DrawTexturedWallSlice(spriteBatch, rayHit, correctedDistance, destinationRectangle);
-
-            //Rectangle wallSliceRectangle = new Rectangle(sliceX, sliceY, (int)MathF.Ceiling(sliceWidth) + 1, sliceHeight);
-
-            //Color wallColor = GetWallColor(rayHit, correctedDistance);
-
-            //spriteBatch.Draw(_pixel, wallSliceRectangle, wallColor);
         }
     }
 
@@ -130,6 +122,16 @@ public class Renderer
 
         textureX = Math.Clamp(textureX, 0, textureWidth - 1);
 
+        // When a ray hits the opposite side of a wall, the texture coordinate runs in the opposite direction
+        // So we flip textureX for specific hit directions
+
+        bool shouldFlipTexture =
+            rayHit.HitSide == WallHitSide.Vertical && rayHit.RayDirection.X > 0 ||
+            rayHit.HitSide == WallHitSide.Horizontal && rayHit.RayDirection.Y < 0;
+
+        if (shouldFlipTexture)
+            textureX = textureWidth - textureX - 1;
+
         return textureX;
     }
 
@@ -154,68 +156,12 @@ public class Renderer
         return new Color(finalBrightness, finalBrightness, finalBrightness);
     }
 
-    //private float CorrectFishEye(float rawDistance, float rayAngle, float playerAngle)
-    //{
-    //    float angleDifference = rayAngle - playerAngle;
-
-    //    return rawDistance * MathF.Cos(angleDifference);
-    //}
-
-    //private Color GetWallColor(RaycastHit rayHit, float correctedDistance)
-    //{
-    //    Color baseColor = GetBaseWallColor(rayHit.TileId);
-
-    //    float sideBrightness = rayHit.HitSide switch
-    //    {
-    //        WallHitSide.Vertical => 1.00f,
-    //        WallHitSide.Horizontal => 0.72f,
-    //        _ => 1.00f
-    //    };
-
-    //    float distanceBrightness = GetDistanceBrightness(correctedDistance);
-
-    //    float finalBrightness = sideBrightness * distanceBrightness;
-
-    //    return ApplyBrightness(baseColor, finalBrightness);
-    //}
-
-    //private Color GetBaseWallColor(int tileId)
-    //{
-    //    return tileId switch
-    //    {
-    //        1 => new Color(170, 170, 190),  // gray wall
-    //        2 => new Color(170, 80, 80),    // red wall
-    //        3 => new Color(80, 140, 190),   // blue wall
-    //        _ => new Color(200, 200, 200)
-    //    };
-    //}
-
     private float GetDistanceBrightness(float distance)
     {
         float brightness = 1.0f / (1.0f + distance * 0.12f);
 
         return MathHelper.Clamp(brightness, 0.18f, 1.0f);
     }
-
-    //private Color ApplyBrightness(Color color, float brightness)
-    //{
-    //    brightness = MathHelper.Clamp(brightness, 0.0f, 1.0f);
-
-    //    return new Color(
-    //        (byte)(color.R * brightness),
-    //        (byte)(color.G * brightness),
-    //        (byte)(color.B * brightness),
-    //        color.A
-    //    );
-    //}
-
-    //private void DrawMiniMap(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
-    //{
-    //    DrawMap(spriteBatch, worldMap);
-    //    DrawRays(spriteBatch, player, rayHits);
-    //    DrawPlayer(spriteBatch, player);
-    //    DrawPlayerDirection(spriteBatch, player);
-    //}
 
     private void DrawMap(SpriteBatch spriteBatch, WorldMap worldMap)
     {
