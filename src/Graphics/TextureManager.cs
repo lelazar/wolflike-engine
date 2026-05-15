@@ -9,6 +9,7 @@
  */
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using WolfLike.src.Core;
 
@@ -18,6 +19,7 @@ public class TextureManager
 {
     private readonly Dictionary<int, Texture2D> _wallTextures = new();
     private readonly Dictionary<int, Texture2D> _spriteTextures = new();
+    private readonly Dictionary<int, Texture2D> _weaponTextures = new();
 
     public void LoadContent(GraphicsDevice graphicsDevice)
     {
@@ -29,6 +31,9 @@ public class TextureManager
 
         _spriteTextures[1] = CreateEnemyPlaceholderTexture(graphicsDevice, size, size);
         _spriteTextures[2] = CreatePickupPlaceholderTexture(graphicsDevice, size, size);
+
+        _weaponTextures[1] = CreateWeaponPlaceholderTexture(graphicsDevice, 160, 120);
+        _weaponTextures[2] = CreateMuzzleFlashTexture(graphicsDevice, 96, 96);
     }
 
     public Texture2D GetWallTexture(int tileId)
@@ -43,6 +48,13 @@ public class TextureManager
         if (_spriteTextures.TryGetValue(spriteId, out Texture2D texture))
             return texture;
         return _spriteTextures[1];
+    }
+
+    public Texture2D GetWeaponTexture(int weaponTextureId)
+    {
+        if (_weaponTextures.TryGetValue(weaponTextureId, out Texture2D texture))
+            return texture;
+        return _weaponTextures[1];
     }
 
     private Texture2D CreateStoneTexture(GraphicsDevice graphicsDevice, int width, int height)
@@ -185,6 +197,99 @@ public class TextureManager
 
                 if (vertical || horizontal)
                     color = new Color(230, 220, 70, 255);
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
+    }
+
+    private Texture2D CreateWeaponPlaceholderTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color = Color.Transparent;
+
+                bool barrel = x >= 68 && x <= 92 && y >= 8 && y <= 72;
+
+                bool barrelHighlight = x >= 74 && x <= 80 && y >= 12 && y <= 68;
+
+                bool body = x >= 45 && x <= 115 && y >= 58 && y <= 105;
+
+                bool grip = x >= 72 && x <= 102 && y >= 92 && y <= 119;
+
+                bool handleCut = x >= 47 && x <= 68 && y >= 88 && y <= 112;
+
+                if (barrel)
+                    color = new Color(70, 70, 75, 255);
+                if (barrelHighlight)
+                    color = new Color(120, 120, 130, 255);
+                if (body)
+                    color = new Color(45, 45, 50, 255);
+                if (grip)
+                    color = new Color(35, 45, 40, 255);
+                if (handleCut)
+                    color = Color.Transparent;
+
+                bool outline =
+                    (x >= 43 && x <= 117 && y >= 56 && y <= 59) ||
+                    (x >= 43 && x <= 117 && y >= 103 && y <= 106) ||
+                    (x >= 43 && x <= 46 && y >= 56 && y <= 106) ||
+                    (x >= 114 && x <= 117 && y >= 56 && y <= 106);
+
+                if (outline)
+                    color = new Color(10, 10, 12, 255);
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
+    }
+
+    private Texture2D CreateMuzzleFlashTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        Vector2 center = new Vector2(width / 2f, height / 2f);
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Vector2 position = new Vector2(x, y);
+                float distance = Vector2.Distance(position, center);
+
+                Color color = Color.Transparent;
+
+                bool verticalFlame = Math.Abs(x - center.X) < 10 && distance < 42;
+                bool horizontalFlame = Math.Abs(y - center.Y) < 8 && distance < 34;
+                bool diamond = Math.Abs(x - center.X) + Math.Abs(y - center.Y) < 38;
+
+                if (verticalFlame || horizontalFlame || diamond)
+                {
+                    float brightness = 1.0f - distance / 48.0f;
+                    brightness = MathHelper.Clamp(brightness, 0.0f, 1.0f);
+
+                    color = new Color(
+                        (byte)(255 * brightness),
+                        (byte)(210 * brightness),
+                        (byte)(60 * brightness),
+                        (byte)220
+                    );
+                }
+
+                if (distance < 12)
+                    color = new Color(255, 245, 180, 255);
 
                 data[y * width + x] = color;
             }

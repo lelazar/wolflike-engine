@@ -2,6 +2,7 @@
 using WolfLike.src.Entities;
 using WolfLike.src.Graphics;
 using WolfLike.src.Core;
+using WolfLike.src.Gameplay;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
@@ -19,6 +20,8 @@ public class Engine
 
     private RaycastHit[] _rayHits;
     private List<SpriteEntity> _sprites;
+
+    private Weapon _weapon;
 
     /* Ray count */
     // Later, for 3D rendering, I will probably use something closer to the screen width or a reduced logical render resolution
@@ -54,6 +57,8 @@ public class Engine
                 Scale = 0.65f
             }
         };
+
+        _weapon = new();
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice)
@@ -71,12 +76,14 @@ public class Engine
         //_centerRayHit = _raycaster.CastRay(_player.Position, _player.Angle, _worldMap);
 
         CastFieldOfViewRays();
+
+        _weapon.Update(deltaTime);
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         //_renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon);
     }
 
     // Calculating many ray angles

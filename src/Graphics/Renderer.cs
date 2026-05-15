@@ -13,6 +13,7 @@ using System;
 using WolfLike.src.Entities;
 using WolfLike.src.World;
 using WolfLike.src.Core;
+using WolfLike.src.Gameplay;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,7 +35,7 @@ public class Renderer
         _textureManager.LoadContent(graphicsDevice);  // Now the renderer has access to wall textures
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
@@ -44,10 +45,12 @@ public class Renderer
         // ceiling / floor first
         // walls second
         // sprites third
+        // weapon overlay drawn last because it is part of the screen/HUD, not part of the world
         // Sprites are drawn after walls, but still a depth-check is needed so they do not appear through walls
         DrawCeilingAndFloor(spriteBatch);
         DrawWallSlices(spriteBatch, player, rayHits);
         DrawSprites(spriteBatch, player, rayHits, sprites);
+        DrawWeapon(spriteBatch, weapon);
 
         // Small debug minimap in the top-left corner
         //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
@@ -410,5 +413,48 @@ public class Renderer
         );
 
         spriteBatch.Draw(_pixel, lineRectangle, null, color, angle, Vector2.Zero, SpriteEffects.None, 0);
+    }
+
+    private void DrawWeapon(SpriteBatch spriteBatch, Weapon weapon)
+    {
+        // This method places the weapon at the bottom center of the screen
+
+        if (weapon == null)
+            return;
+
+        Texture2D weaponTexture = _textureManager.GetWeaponTexture(1);
+
+        int weaponWidth = weaponTexture.Width * 3;
+        int weaponHeight = weaponTexture.Height * 3;
+
+        int recoilOffsetY = weapon.IsMuzzleFlashVisible ? 18 : 0;  // When firing, the weapon moves slightly downward for a few frames, giving a simple recoil feeling
+
+        int weaponX = GameSettings.SCREENWIDTH / 2 - weaponWidth / 2;
+        int weaponY = GameSettings.SCREENHEIGHT - weaponHeight + 40 + recoilOffsetY;  // Slightly lower so it feels like it is coming from the bottom of the screen
+
+        Rectangle weaponDestination = new Rectangle(weaponX, weaponY, weaponWidth, weaponHeight);
+
+        spriteBatch.Draw(weaponTexture, weaponDestination, Color.White);
+
+        if (weapon.IsMuzzleFlashVisible)
+            DrawMuzzleFlash(spriteBatch);
+    }
+
+    private void DrawMuzzleFlash(SpriteBatch spriteBatch)
+    {
+        Texture2D flashTexture = _textureManager.GetWeaponTexture(2);
+
+        int flashWidth = flashTexture.Width * 2;
+        int flashHeight = flashTexture.Height * 2;
+
+        int flashX = GameSettings.SCREENWIDTH / 2 - flashWidth / 2;
+        int flashY = GameSettings.SCREENHEIGHT - 420;  // TODO: Tune this number depending on how the weapon appears
+        // If the flash is too high or too low, adjust it:
+        // lower flash  -> larger Y value
+        // higher flash -> smaller Y value
+
+        Rectangle flashDestination = new Rectangle(flashX, flashY, flashWidth, flashHeight);
+
+        spriteBatch.Draw(flashTexture, flashDestination, Color.White);
     }
 }
