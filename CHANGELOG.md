@@ -2,6 +2,20 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.12] - Sprite/Object Rendering
+
+### Added
+- Added `SpriteEntity` class
+- Added procedural sprite textures
+- Added sprite rendering in the raycast view
+- Added distance-based sprite scaling
+- Added sprite sorting from far to near
+- Added basic sprite wall occlusion using ray distances
+- Added placeholder enemy and pickup objects
+
+### Changed
+- Renderer now supports world-space billboard objects
+
 ## [v0.11] - Texture Orientation and Camera Settings
 
 ### Added
