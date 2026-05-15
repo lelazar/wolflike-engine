@@ -1,9 +1,20 @@
-﻿using Microsoft.Xna.Framework;
+﻿/**
+ * In a Wolfenstein-style raycaster, objects/enemies/items are usually rendered as billboard sprites:
+ * A 2D image placed at a 2D world position;
+ * scaled by distance;
+ * drawn on top of the 3D wall view;
+ * and hidden behind walls when needed.
+ * For learning purposes, let's add a simple procedural placeholder sprite and later, this can become an enemy or barrel or anything!
+ */
+
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using WolfLike.src.Entities;
 using WolfLike.src.World;
 using WolfLike.src.Core;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace WolfLike.src.Graphics;
 
@@ -23,14 +34,20 @@ public class Renderer
         _textureManager.LoadContent(graphicsDevice);  // Now the renderer has access to wall textures
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
         // Without it, MonoGame may blur the texture columns when stretching them
 
+        // The order matters:
+        // ceiling / floor first
+        // walls second
+        // sprites third
+        // Sprites are drawn after walls, but still a depth-check is needed so they do not appear through walls
         DrawCeilingAndFloor(spriteBatch);
         DrawWallSlices(spriteBatch, player, rayHits);
+        DrawSprites(spriteBatch, player, rayHits, sprites);
 
         // Small debug minimap in the top-left corner
         //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
@@ -108,9 +125,123 @@ public class Renderer
         spriteBatch.Draw(wallTexture, destinationRectangle, sourceRectangle, shadeColor);
     }
 
-    // This converts: WallX 0.0 to 1.0 into: texture column 0 to textureWidth -1
+    private void DrawSprites(SpriteBatch spriteBatch, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites)
+    {
+        if (sprites == null || sprites.Count == 0)
+            return;
+
+        // Why sort descending? Far sprites first, near sprites last
+        List<SpriteEntity> sortedSprites = sprites
+            .Where(sprite => sprite.IsVisible)
+            .OrderByDescending(sprite => Vector2.DistanceSquared(player.Position, sprite.Position))
+            .ToList();
+
+        foreach (SpriteEntity sprite in sortedSprites)
+            DrawSprite(spriteBatch, player, rayHits, sprite);
+    }
+
+    private void DrawSprite(SpriteBatch spriteBatch, Player player, RaycastHit[] rayHits, SpriteEntity sprite)
+    {
+        // This method projects the sprite from world space into screen space
+
+        Vector2 toSprite = sprite.Position - player.Position;
+
+        float distanceToSprite = toSprite.Length();  // Decides rendered size
+
+        if (distanceToSprite < 0.0001f)
+            return;
+
+        float spriteAngle = MathF.Atan2(toSprite.Y, toSprite.X);
+        float angleDifference = NormalizeAngle(spriteAngle - player.Angle);  // Decides left/right screen position
+
+        float halfFov = GameSettings.FIELDOFVIEW / 2.0f;
+
+        if (angleDifference < -halfFov || angleDifference > halfFov)
+            return;
+
+        float perpendicularDistance = distanceToSprite * MathF.Cos(angleDifference);
+
+        if (perpendicularDistance <= 0.0001f)
+            return;
+
+        Texture2D spriteTexture = _textureManager.GetSpriteTexture(sprite.SpriteId);
+
+        float screenXNormalized = 0.5f + angleDifference / GameSettings.FIELDOFVIEW;
+        int spriteScreenCenterX = (int)(screenXNormalized * GameSettings.SCREENWIDTH);
+
+        int projectedHeight = (int)(GameSettings.SCREENHEIGHT / perpendicularDistance * sprite.Scale);
+        int projectedWidth = projectedHeight;
+
+        int spriteTopY = GameSettings.SCREENHEIGHT / 2 - projectedHeight / 2;
+        int spriteLeftX = spriteScreenCenterX - projectedWidth / 2;
+
+        DrawSpriteWithDepthCheck(spriteBatch, spriteTexture, spriteLeftX, spriteTopY, projectedWidth, projectedHeight, perpendicularDistance, rayHits);
+    }
+
+    private void DrawSpriteWithDepthCheck(SpriteBatch spriteBatch, Texture2D spriteTexture, int spriteLeftX, int spriteTopY, int projectedWidth, int projectedHeight, float spriteDistance, RaycastHit[] rayHits)
+    {
+        // This methor draws the sprite one vertical column at a time
+        // Why? Because each screen X position can have a different wall distance in front of it
+        // This lets us hide parts of the sprite behind walls
+        // This is the same basic concept old raycasters used with a depth buffer
+
+        if (projectedWidth <= 0 || projectedHeight <= 0) 
+            return;
+
+        float rayToScreenScale = (float)rayHits.Length / GameSettings.SCREENWIDTH;
+
+        for (int screenX = spriteLeftX; screenX < spriteLeftX + projectedWidth; screenX++)
+        {
+            if (screenX < 0 || screenX >= GameSettings.SCREENWIDTH)
+                continue;
+
+            int rayIndex = (int)(screenX * rayToScreenScale);
+            rayIndex = Math.Clamp(rayIndex, 0, rayHits.Length - 1);
+
+            RaycastHit wallHit = rayHits[rayIndex];
+
+            if (wallHit != null && wallHit.HitWall && spriteDistance >= wallHit.Distance)
+                continue;
+
+            float textureRatio = (float)(screenX - spriteLeftX) / projectedWidth;
+            int textureX = (int)(textureRatio * spriteTexture.Width);
+            textureX = Math.Clamp(textureX, 0, spriteTexture.Width - 1);
+
+            Rectangle sourceRectangle = new Rectangle(textureX, 0, 1, spriteTexture.Height);
+            Rectangle destinationRectangle = new Rectangle(screenX, spriteTopY, 1, projectedHeight);
+
+            Color shadeColor = GetSpriteShadeColor(spriteDistance);
+
+            spriteBatch.Draw(spriteTexture, destinationRectangle, sourceRectangle, shadeColor);
+        }
+    }
+
+    private Color GetSpriteShadeColor(float distance)
+    {
+        // This method makes far sprites darker and near sprites brighter
+
+        float brightness = 1.0f / (1.0f + distance * 0.08f);
+
+        brightness = MathHelper.Clamp(brightness, 0.25f, 1.0f);
+
+        return new Color(brightness, brightness, brightness);
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        // This keeps angle differences in -PI to +PI range
+        // Without this, looking across the 0 angle boundary can break sprite projection
+
+        while (angle > MathF.PI)
+            angle -= MathF.Tau;
+        while (angle < -MathF.PI)
+            angle += MathF.Tau;
+        return angle;
+    }
+
     private int GetTextureXCoordinate(RaycastHit rayHit, int textureWidth)
     {
+        // This converts: WallX 0.0 to 1.0 into: texture column 0 to textureWidth -1
         // Example with 64-pixel-wide texture:
         // WallX = 0.00->textureX = 0
         // WallX = 0.50->textureX = 32

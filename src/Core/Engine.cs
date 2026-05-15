@@ -5,6 +5,7 @@ using WolfLike.src.Core;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace WolfLike.src.Core;
 
@@ -17,6 +18,7 @@ public class Engine
     //private RaycastHit _centerRayHit; TODO: Replace this with an array/list of ray hits to simulate it as a camera
 
     private RaycastHit[] _rayHits;
+    private List<SpriteEntity> _sprites;
 
     /* Ray count */
     // Later, for 3D rendering, I will probably use something closer to the screen width or a reduced logical render resolution
@@ -39,6 +41,19 @@ public class Engine
         _raycaster = new();
 
         _rayHits = new RaycastHit[GameSettings.RAYCOUNT];
+
+        _sprites = new List<SpriteEntity>
+        {
+            new SpriteEntity(new Vector2(6.5f, 5.5f), 1)
+            {
+                Scale = 1.0f
+            },
+
+            new SpriteEntity(new Vector2(2.5f, 2.5f), 2)
+            {
+                Scale = 0.65f
+            }
+        };
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice)
@@ -61,7 +76,7 @@ public class Engine
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         //_renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites);
     }
 
     // Calculating many ray angles

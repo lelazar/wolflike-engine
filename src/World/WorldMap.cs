@@ -61,7 +61,13 @@ public class WorldMap
         return _tiles[y, x];  // The first number is the row, meaning Y. The second number is the column, meaning X
     }
 
-    public bool IsWall(int x, int y) => GetTile(x, y) == 1;
+    public bool IsWall(int x, int y) => GetTile(x, y) > 0;
+    // Now with > 0, the meaning becomes:
+    // 0 = empty / walkable
+    // 1 = wall type 1 / solid
+    // 2 = wall type 2 / solid
+    // 3 = wall type 3 / solid
+    // That is needed, because with == 1, it did not recognize brick and metal walls (Tile IDs of 2 and 3) as collidable walls!
 
     public bool IsWallAt(float x, float y)
     {
