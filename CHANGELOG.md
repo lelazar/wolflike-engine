@@ -2,6 +2,20 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.13] - Weapon Placeholder and Shooting Input
+
+### Added
+- Added `Weapon` class
+- Added shooting input with Space and left mouse button
+- Added weapon fire cooldown
+- Added procedural weapon placeholder texture
+- Added procedural muzzle flash texture
+- Added bottom-center weapon rendering
+- Added short muzzle flash effect when firing
+
+### Changed
+- Renderer now draws a weapon overlay after world rendering
+
 ## [v0.12] - Sprite/Object Rendering
 
 ### Added
