@@ -49,12 +49,15 @@ public class Engine
         {
             new SpriteEntity(new Vector2(6.5f, 5.5f), 1)
             {
-                Scale = 1.0f
+                Scale = 1.0f,
+                IsDamageable = true,  // Only the green sprite can be damaged
+                CollisionRadius = 0.35f
             },
 
             new SpriteEntity(new Vector2(2.5f, 2.5f), 2)
             {
-                Scale = 0.65f
+                Scale = 0.65f,
+                IsDamageable = false
             }
         };
 
@@ -78,6 +81,9 @@ public class Engine
         CastFieldOfViewRays();
 
         _weapon.Update(deltaTime);
+
+        if (_weapon.IsFiring)
+            HandleWeaponFire();  // When the weapon fires, the engine checks for a target
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -99,5 +105,100 @@ public class Engine
 
             _rayHits[i] = _raycaster.CastRay(_player.Position, rayAngle, _worldMap);
         }
+    }
+
+    private void HandleWeaponFire()
+    {
+        // This simpe method finds the target then damages it
+
+        SpriteEntity target = FindShootTarget();
+
+        if (target == null) 
+            return;
+
+        target.TakeDamage(_weapon.Damage);
+    }
+
+    private SpriteEntity FindShootTarget()
+    {
+        // This method checks whether the enemy is close enough to the player’s center aim
+
+        if (_sprites == null || _sprites.Count == 0) 
+            return null;
+
+        RaycastHit centerRayHit = GetCenterRayHit();
+
+        SpriteEntity closestTarget = null;
+        float closestDistance = float.MaxValue;
+
+        foreach (SpriteEntity sprite in _sprites)
+        {
+            if (!sprite.IsVisible)
+                continue;
+            if (!sprite.IsDamageable)
+                continue;
+            if (!sprite.IsAlive)
+                continue;
+
+            Vector2 toSprite = sprite.Position - _player.Position;
+            float distanceToSprite = toSprite.Length();
+
+            if (distanceToSprite <= 0.0001f)
+                continue;
+            if (IsBlockedByWall(centerRayHit, distanceToSprite))
+                continue;
+
+            float spriteAngle = MathF.Atan2(toSprite.Y, toSprite.X);
+            float angleDifference = NormalizeAngle(spriteAngle - _player.Angle);
+            float angularRadius = MathF.Atan(sprite.CollisionRadius / distanceToSprite);  // near enemy = easier to hit on screen; far enemy = smaller target
+            float minimumHitAngle = 0.025f;
+            float allowedHitAngle = MathF.Max(angularRadius, minimumHitAngle);
+
+            if (MathF.Abs(angleDifference) > allowedHitAngle)
+                continue;
+
+            if (distanceToSprite < closestDistance)
+            {
+                closestDistance = distanceToSprite;
+                closestTarget = sprite;
+            }
+        }
+
+        return closestTarget;
+    }
+
+    private RaycastHit GetCenterRayHit()
+    {
+        // The center ray represents what the player is aiming at
+
+        if (_rayHits == null || _rayHits.Length == 0)
+            return null;
+
+        int centerIndex = _rayHits.Length / 2;
+
+        return _rayHits[centerIndex];
+    }
+
+    private bool IsBlockedByWall(RaycastHit centerRayHit, float targetDistance)
+    {
+        // This method prevents shooting through walls
+        // If a wall is closer than the enemy, the shot is blocked
+
+        if (centerRayHit == null)
+            return false;
+        if (!centerRayHit.HitWall)
+            return false;
+        return centerRayHit.Distance < targetDistance;
+    }
+
+    private float NormalizeAngle(float angle)
+    {
+        // This method makes angle comparison reliable when rotating around 0, PI and -PI
+
+        while (angle > MathF.PI)
+            angle -= MathF.Tau;
+        while (angle < -MathF.PI)
+            angle += MathF.Tau;
+        return angle;
     }
 }

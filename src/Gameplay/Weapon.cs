@@ -32,6 +32,13 @@ public class Weapon
 
     public bool IsFiring { get; private set; }
     public bool IsMuzzleFlashVisible => _muzzleFlashTimer > 0.0f;
+    public int Damage { get; set; } = 50;
+
+    public Weapon()
+    {
+        _previousKeyboardState = Keyboard.GetState();
+        _previousMouseState = Mouse.GetState();
+    }
 
     public void Update(float deltaTime)
     {
