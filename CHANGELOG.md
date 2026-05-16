@@ -2,6 +2,19 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.14] - Enemy Hit Detection
+
+### Added
+- Added damageable sprite entities
+- Added sprite health
+- Added weapon damage
+- Added center-view shooting hit detection
+- Added wall-blocking check for shots
+- Added enemy removal when health reaches zero
+
+### Changed
+- Weapon firing now affects world entities
+
 ## [v0.13] - Weapon Placeholder and Shooting Input
 
 ### Added
