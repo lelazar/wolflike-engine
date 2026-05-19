@@ -5,6 +5,7 @@ using WolfLike.src.Core;
 using WolfLike.src.Gameplay;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using System;
 using System.Collections.Generic;
 
@@ -22,6 +23,10 @@ public class Engine
     private List<SpriteEntity> _sprites;
 
     private Weapon _weapon;
+
+    public Player Player => _player;
+    public IReadOnlyList<SpriteEntity> Sprites => _sprites;
+    public Weapon Weapon => _weapon;
 
     /* Ray count */
     // Later, for 3D rendering, I will probably use something closer to the screen width or a reduced logical render resolution
@@ -64,9 +69,9 @@ public class Engine
         _weapon = new();
     }
 
-    public void LoadContent(GraphicsDevice graphicsDevice)
+    public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
     {
-        _renderer.LoadContent(graphicsDevice);
+        _renderer.LoadContent(graphicsDevice, content);
     }
 
     public void Update(GameTime gameTime)
@@ -75,8 +80,9 @@ public class Engine
 
         _player.Update(deltaTime, _worldMap);
 
-        // Cast one ray in the exact direction the player is facing
-        //_centerRayHit = _raycaster.CastRay(_player.Position, _player.Angle, _worldMap);
+        // Now sprites need to update every frame
+        foreach (SpriteEntity sprite in _sprites)
+            sprite.Update(deltaTime);
 
         CastFieldOfViewRays();
 
@@ -109,7 +115,7 @@ public class Engine
 
     private void HandleWeaponFire()
     {
-        // This simpe method finds the target then damages it
+        // This simple method finds the target then damages it
 
         SpriteEntity target = FindShootTarget();
 
@@ -117,6 +123,7 @@ public class Engine
             return;
 
         target.TakeDamage(_weapon.Damage);
+        _weapon.RegisterHit();  // When an enemy is hit, it will take damage and the weapon shows hit marker
     }
 
     private SpriteEntity FindShootTarget()

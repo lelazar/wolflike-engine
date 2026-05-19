@@ -8,14 +8,15 @@
  */
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using WolfLike.src.Entities;
-using WolfLike.src.World;
-using WolfLike.src.Core;
-using WolfLike.src.Gameplay;
 using System.Collections.Generic;
 using System.Linq;
+using WolfLike.src.Core;
+using WolfLike.src.Entities;
+using WolfLike.src.Gameplay;
+using WolfLike.src.World;
 
 namespace WolfLike.src.Graphics;
 
@@ -23,16 +24,19 @@ public class Renderer
 {
     private Texture2D _pixel;
     private TextureManager _textureManager;
+    private SpriteFont _debugFont;
 
     private const int TILESIZE = 48;
 
-    public void LoadContent(GraphicsDevice graphicsDevice)
+    public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
     {
         _pixel = new Texture2D(graphicsDevice, 1, 1);
         _pixel.SetData(new[] { Color.White });
 
         _textureManager = new();
         _textureManager.LoadContent(graphicsDevice);  // Now the renderer has access to wall textures
+
+        _debugFont = content.Load<SpriteFont>("DebugFont");
     }
 
     public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon)
@@ -51,6 +55,9 @@ public class Renderer
         DrawWallSlices(spriteBatch, player, rayHits);
         DrawSprites(spriteBatch, player, rayHits, sprites);
         DrawWeapon(spriteBatch, weapon);
+        DrawCrosshair(spriteBatch);
+        DrawHitMarker(spriteBatch, weapon);
+        DrawDebugHud(spriteBatch, player, sprites);
 
         // Small debug minimap in the top-left corner
         //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
@@ -178,10 +185,10 @@ public class Renderer
         int spriteTopY = GameSettings.SCREENHEIGHT / 2 - projectedHeight / 2;
         int spriteLeftX = spriteScreenCenterX - projectedWidth / 2;
 
-        DrawSpriteWithDepthCheck(spriteBatch, spriteTexture, spriteLeftX, spriteTopY, projectedWidth, projectedHeight, perpendicularDistance, rayHits);
+        DrawSpriteWithDepthCheck(spriteBatch, spriteTexture, sprite, spriteLeftX, spriteTopY, projectedWidth, projectedHeight, perpendicularDistance, rayHits);
     }
 
-    private void DrawSpriteWithDepthCheck(SpriteBatch spriteBatch, Texture2D spriteTexture, int spriteLeftX, int spriteTopY, int projectedWidth, int projectedHeight, float spriteDistance, RaycastHit[] rayHits)
+    private void DrawSpriteWithDepthCheck(SpriteBatch spriteBatch, Texture2D spriteTexture, SpriteEntity sprite, int spriteLeftX, int spriteTopY, int projectedWidth, int projectedHeight, float spriteDistance, RaycastHit[] rayHits)
     {
         // This methor draws the sprite one vertical column at a time
         // Why? Because each screen X position can have a different wall distance in front of it
@@ -213,15 +220,18 @@ public class Renderer
             Rectangle sourceRectangle = new Rectangle(textureX, 0, 1, spriteTexture.Height);
             Rectangle destinationRectangle = new Rectangle(screenX, spriteTopY, 1, projectedHeight);
 
-            Color shadeColor = GetSpriteShadeColor(spriteDistance);
+            Color shadeColor = GetSpriteShadeColor(sprite, spriteDistance);
 
             spriteBatch.Draw(spriteTexture, destinationRectangle, sourceRectangle, shadeColor);
         }
     }
 
-    private Color GetSpriteShadeColor(float distance)
+    private Color GetSpriteShadeColor(SpriteEntity sprite, float distance)
     {
         // This method makes far sprites darker and near sprites brighter
+
+        if (sprite.IsDamageFlashVisible)
+            return new Color(1.0f, 0.25f, 0.25f);  // Damageable enemies flash red when hit
 
         float brightness = 1.0f / (1.0f + distance * 0.08f);
 
@@ -456,5 +466,129 @@ public class Renderer
         Rectangle flashDestination = new Rectangle(flashX, flashY, flashWidth, flashHeight);
 
         spriteBatch.Draw(flashTexture, flashDestination, Color.White);
+    }
+
+    private void DrawCrosshair(SpriteBatch spriteBatch)
+    {
+        // This method gives us a simple FPS-style crosshair
+
+        int centerX = GameSettings.SCREENWIDTH / 2;
+        int centerY = GameSettings.SCREENHEIGHT / 2;
+
+        int gap = 6;
+        int length = 10;
+        int thickness = 2;
+
+        Color color = new Color(230, 230, 230, 220);
+
+        spriteBatch.Draw(
+            _pixel,
+            new Rectangle(centerX - gap - length, centerY - thickness / 2, length, thickness),
+            color
+        );
+
+        spriteBatch.Draw(
+            _pixel,
+            new Rectangle(centerX + gap, centerY - thickness / 2, length, thickness),
+            color
+        );
+
+        spriteBatch.Draw(
+            _pixel,
+            new Rectangle(centerX - thickness / 2, centerY - gap - length, thickness, length),
+            color
+        );
+
+        spriteBatch.Draw(
+            _pixel,
+            new Rectangle(centerX - thickness / 2, centerY + gap, thickness, length),
+            color
+        );
+    }
+
+    private void DrawHitMarker(SpriteBatch spriteBatch, Weapon weapon)
+    {
+        // This method displays a short white X-like marker when an enemy is hit
+
+        if (weapon == null || !weapon.IsHitMarkerVisible)
+            return;
+
+        int centerX = GameSettings.SCREENWIDTH / 2;
+        int centerY = GameSettings.SCREENHEIGHT / 2;
+
+        int offset = 12;
+        int length = 10;
+        int thickness = 3;
+
+        Color color = new Color(255, 255, 255, 255);
+
+        DrawLine(
+            spriteBatch,
+            new Vector2(centerX - offset, centerY - offset),
+            new Vector2(centerX - offset - length, centerY - offset - length),
+            color,
+            thickness
+        );
+
+        DrawLine(
+            spriteBatch,
+            new Vector2(centerX + offset, centerY - offset),
+            new Vector2(centerX + offset + length, centerY - offset - length),
+            color,
+            thickness
+        );
+
+        DrawLine(
+            spriteBatch,
+            new Vector2(centerX - offset, centerY + offset),
+            new Vector2(centerX - offset - length, centerY + offset + length),
+            color,
+            thickness
+        );
+
+        DrawLine(
+            spriteBatch,
+            new Vector2(centerX + offset, centerY + offset),
+            new Vector2(centerX + offset + length, centerY + offset + length),
+            color,
+            thickness
+        );
+    }
+
+    private void DrawDebugHud(SpriteBatch spriteBatch, Player player, List<SpriteEntity> sprites)
+    {
+        if (_debugFont == null) return;
+
+        int visibleSprites = sprites.Count(sprite => sprite.IsVisible);
+        int damageableSprites = sprites.Count(sprite => sprite.IsDamageable && sprite.IsAlive);
+
+        SpriteEntity firstEnemy = sprites.FirstOrDefault(sprite => sprite.IsDamageable);
+
+        string enemyHealthText = firstEnemy == null
+            ? "Enemy HP: N/A"
+            : $"Enemy HP: {firstEnemy.Health}";
+
+        string debugText =
+            $"Player X: {player.Position.X:0.00}\n" +
+            $"Player Y: {player.Position.Y:0.00}\n" +
+            $"Angle: {MathHelper.ToDegrees(player.Angle):0.0} deg\n" +
+            $"Visible Sprites: {visibleSprites}\n" +
+            $"Alive Enemies: {damageableSprites}\n" +
+            $"{enemyHealthText}";
+
+        Vector2 position = new Vector2(12, 12);
+
+        Vector2 size = _debugFont.MeasureString(debugText);
+
+        Rectangle backgroundRectangle = new Rectangle(
+            (int)position.X - 6,
+            (int)position.Y - 6,
+            (int)size.X + 12,
+            (int)size.Y + 12
+        );
+
+        spriteBatch.Draw(_pixel, backgroundRectangle, new Color(0, 0, 0, 150));
+
+        spriteBatch.DrawString(_debugFont, debugText, position, Color.White);
     }
 }

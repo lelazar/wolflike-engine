@@ -34,7 +34,7 @@ namespace WolfLike
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _engine.LoadContent(GraphicsDevice);
+            _engine.LoadContent(GraphicsDevice, Content);
         }
 
         protected override void Update(GameTime gameTime)

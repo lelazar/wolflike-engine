@@ -23,9 +23,11 @@ public class Weapon
 {
     private const float FIRECOOLDOWNSECONDS        = 0.35f;
     private const float MUZZLEFLASHDURATIONSECONDS = 0.08f;
+    private const float HITMARKERDURATIONSECONDS   = 0.12f;
 
     private float _cooldownTimer;
     private float _muzzleFlashTimer;
+    private float _hitMarkerTimer;
 
     private KeyboardState _previousKeyboardState;
     private MouseState _previousMouseState;
@@ -33,6 +35,7 @@ public class Weapon
     public bool IsFiring { get; private set; }
     public bool IsMuzzleFlashVisible => _muzzleFlashTimer > 0.0f;
     public int Damage { get; set; } = 50;
+    public bool IsHitMarkerVisible => _hitMarkerTimer > 0.0f;
 
     public Weapon()
     {
@@ -48,6 +51,8 @@ public class Weapon
             _cooldownTimer -= deltaTime;
         if (_muzzleFlashTimer > 0.0f)
             _muzzleFlashTimer -= deltaTime;
+        if (_hitMarkerTimer  > 0.0f)
+            _hitMarkerTimer -= deltaTime;
 
         KeyboardState keyboard = Keyboard.GetState();
         MouseState mouse = Mouse.GetState();
@@ -59,6 +64,12 @@ public class Weapon
 
         _previousKeyboardState = keyboard;
         _previousMouseState = mouse;
+    }
+
+    public void RegisterHit()
+    {
+        // When an enemy is hit, the engine will call this method
+        _hitMarkerTimer = HITMARKERDURATIONSECONDS;
     }
 
     private void Fire()
