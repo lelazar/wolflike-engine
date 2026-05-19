@@ -2,6 +2,21 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.15] - Enemy Feedback and Debug HUD
+
+### Added
+- Added crosshair rendering
+- Added hit marker feedback
+- Added enemy damage flash
+- Added sprite update loop
+- Added weapon hit marker timer
+- Added debug HUD with player and enemy information
+- Added SpriteFont-based debug text rendering
+
+### Changed
+- Weapon now registers successful hits
+- Damageable sprites now provide visual feedback when hit
+
 ## [v0.14] - Enemy Hit Detection
 
 ### Added
