@@ -2,6 +2,22 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.16] - Player Health and Enemy Contact Damage
+
+### Added
+- Added player health and max health
+- Added player damage handling
+- Added invulnerability timer after damage
+- Added player damage flash overlay
+- Added enemy contact damage
+- Added player health bar
+- Added player health data to debug HUD
+- Added optional death overlay
+
+### Changed
+- Damageable sprites can now damage the player on contact
+- Player movement stops when health reaches zero
+
 ## [v0.15] - Enemy Feedback and Debug HUD
 
 ### Added
