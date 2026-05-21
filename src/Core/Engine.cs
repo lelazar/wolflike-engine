@@ -56,7 +56,9 @@ public class Engine
             {
                 Scale = 1.0f,
                 IsDamageable = true,  // Only the green sprite can be damaged
-                CollisionRadius = 0.35f
+                CollisionRadius = 0.35f,
+                ContactDamage = 10,
+                ContactDamageRadius = 0.75f
             },
 
             new SpriteEntity(new Vector2(2.5f, 2.5f), 2)
@@ -84,12 +86,18 @@ public class Engine
         foreach (SpriteEntity sprite in _sprites)
             sprite.Update(deltaTime);
 
+        // Need to check enemy contact every frame
+        HandleEnemyContactDamage();
+        
         CastFieldOfViewRays();
 
-        _weapon.Update(deltaTime);
+        if (_player.IsAlive)
+        {
+            _weapon.Update(deltaTime);
 
-        if (_weapon.IsFiring)
-            HandleWeaponFire();  // When the weapon fires, the engine checks for a target
+            if (_weapon.IsFiring)
+                HandleWeaponFire();  // When the weapon fires, the engine checks for a target
+        }
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
@@ -207,5 +215,25 @@ public class Engine
         while (angle < -MathF.PI)
             angle += MathF.Tau;
         return angle;
+    }
+
+    private void HandleEnemyContactDamage()
+    {
+        // This method makes live damageable enemies hurt the player when close
+        // Because the player has invulnerability frames, this will not drain health every frame
+
+        if (!_player.IsAlive) return;
+
+        foreach (SpriteEntity sprite in _sprites)
+        {
+            if (!sprite.IsVisible) continue;
+            if (!sprite.IsAlive) continue;
+            if (!sprite.IsDamageable) continue;
+
+            float distance = Vector2.Distance(_player.Position, sprite.Position);
+
+            if (distance <= sprite.ContactDamageRadius)
+                _player.TakeDamage(sprite.ContactDamage);
+        }
     }
 }

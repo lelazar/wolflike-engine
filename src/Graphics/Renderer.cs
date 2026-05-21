@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+//using System.Numerics;
 using WolfLike.src.Core;
 using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
@@ -57,6 +58,9 @@ public class Renderer
         DrawWeapon(spriteBatch, weapon);
         DrawCrosshair(spriteBatch);
         DrawHitMarker(spriteBatch, weapon);
+        DrawPlayerHealthBar(spriteBatch, player);
+        DrawDamageOverlay(spriteBatch, player);
+        DrawDeathOverlay(spriteBatch, player);
         DrawDebugHud(spriteBatch, player, sprites);
 
         // Small debug minimap in the top-left corner
@@ -572,6 +576,8 @@ public class Renderer
             $"Player X: {player.Position.X:0.00}\n" +
             $"Player Y: {player.Position.Y:0.00}\n" +
             $"Angle: {MathHelper.ToDegrees(player.Angle):0.0} deg\n" +
+            $"Player HP: {player.Health}/{player.MaxHealth}\n" +
+            $"Invulnerable: {player.IsInvulnerable}\n" +
             $"Visible Sprites: {visibleSprites}\n" +
             $"Alive Enemies: {damageableSprites}\n" +
             $"{enemyHealthText}";
@@ -590,5 +596,47 @@ public class Renderer
         spriteBatch.Draw(_pixel, backgroundRectangle, new Color(0, 0, 0, 150));
 
         spriteBatch.DrawString(_debugFont, debugText, position, Color.White);
+    }
+
+    private void DrawPlayerHealthBar(SpriteBatch spriteBatch, Player player)
+    {
+        // This method creates a red health bar in the lower-left area
+
+        int barWidth = 240, barHeight = 22;
+
+        int x = 24, y = GameSettings.SCREENHEIGHT - 48;
+
+        float healthRatio = player.Health / (float)player.MaxHealth;
+        healthRatio = MathHelper.Clamp(healthRatio, 0.0f, 1.0f);
+
+        Rectangle backgroundRectangle = new Rectangle(x, y, barWidth, barHeight);
+        Rectangle fillRectangle = new Rectangle(x + 2, y + 2, (int)((barWidth - 4) * healthRatio), barHeight - 4);
+
+        spriteBatch.Draw(_pixel, backgroundRectangle, new Color(0, 0, 0, 180));
+        spriteBatch.Draw(_pixel, fillRectangle, new Color(180, 40, 40, 230));
+
+        DrawRectangleBorder(spriteBatch, backgroundRectangle, Color.White);
+    }
+
+    private void DrawDamageOverlay(SpriteBatch spriteBatch, Player player)
+    {
+        // When the player takes damage, the screen briefly flashes red
+
+        if (!player.IsDamageFlashVisible) return;
+
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+
+        spriteBatch.Draw(_pixel, screenRectangle, new Color(180, 0, 0, 80));
+    }
+
+    private void DrawDeathOverlay(SpriteBatch spriteBatch, Player player)
+    {
+        // This method darkens the screen when HP reaches zero
+
+        if (player.IsAlive) return;
+
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+
+        spriteBatch.Draw(_pixel, screenRectangle, new Color(0, 0, 0, 180));
     }
 }

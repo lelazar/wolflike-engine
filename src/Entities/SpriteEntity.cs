@@ -19,10 +19,12 @@ public class SpriteEntity
     public float Scale { get; set; } = 1.0f;
     public bool IsVisible { get; set; } = true;
     public bool IsDamageable { get; set; }
-    public int Health { get; private set; } = 1000;
+    public int Health { get; private set; } = 100;
     public float CollisionRadius { get; set; } = 0.35f;
     public bool IsAlive => Health > 0;
     public bool IsDamageFlashVisible => _damageFlashTimer > 0.0f;
+    public int ContactDamage { get; set; } = 10;
+    public float ContactDamageRadius { get; set; } = 0.65f;
 
     public SpriteEntity(Vector2 position, int spriteId)
     {
