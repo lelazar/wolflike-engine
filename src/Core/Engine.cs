@@ -55,16 +55,21 @@ public class Engine
             new SpriteEntity(new Vector2(6.5f, 5.5f), 1)
             {
                 Scale = 1.0f,
-                IsDamageable = true,  // Only the green sprite can be damaged
+                IsDamageable = true,    // Only the green sprite can be damaged
                 CollisionRadius = 0.35f,
                 ContactDamage = 10,
-                ContactDamageRadius = 0.75f
+                ContactDamageRadius = 0.75f,
+                IsAiControlled = true,  // Only the green enemy moves
+                DetectionRange = 7.0f,  // 4.0 - short awareness; 7.0 - medium awareness; 10.0 - aggressive awareness
+                MoveSpeed = 1.2f,       // 0.8 - slow zombie; 1.2 - normal enemy; 2.0 - fast enemy
+                StopDistance = 0.75f    // 0.65 - close attack; 0.9  - safer contact range; 1.2  - enemy stops farther away
             },
 
             new SpriteEntity(new Vector2(2.5f, 2.5f), 2)
             {
                 Scale = 0.65f,
-                IsDamageable = false
+                IsDamageable = false,
+                IsAiControlled = false
             }
         };
 
@@ -84,7 +89,14 @@ public class Engine
 
         // Now sprites need to update every frame
         foreach (SpriteEntity sprite in _sprites)
+        {
             sprite.Update(deltaTime);
+            //sprite.UpdateAi(deltaTime, _player, _worldMap);
+
+            // The enemy chases only if it has direct LOS to the player
+            if (sprite.IsAiControlled && HasLineOfSightToPlayer(sprite))
+                sprite.UpdateAi(deltaTime, _player, _worldMap);
+        }
 
         // Need to check enemy contact every frame
         HandleEnemyContactDamage();
@@ -235,5 +247,25 @@ public class Engine
             if (distance <= sprite.ContactDamageRadius)
                 _player.TakeDamage(sprite.ContactDamage);
         }
+    }
+
+    private bool HasLineOfSightToPlayer(SpriteEntity sprite)
+    {
+        // With the help of this class' Raycaster, the engine can decide whether the enemy can "see" the player
+
+        Vector2 toPlayer = _player.Position - sprite.Position;
+        float distanceToPlayer = toPlayer.Length();
+
+        if (distanceToPlayer <= 0.0001f)
+            return true;
+
+        float angleToPlayer = MathF.Atan2(toPlayer.Y, toPlayer.X);
+
+        RaycastHit wallHit = _raycaster.CastRay(sprite.Position, angleToPlayer, _worldMap);
+
+        if (wallHit == null || !wallHit.HitWall)
+            return true;
+
+        return wallHit.Distance > distanceToPlayer;
     }
 }

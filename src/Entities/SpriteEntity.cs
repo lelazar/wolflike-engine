@@ -6,6 +6,8 @@
  */
 
 using Microsoft.Xna.Framework;
+using System;
+using WolfLike.src.World;
 
 namespace WolfLike.src.Entities;
 
@@ -25,6 +27,10 @@ public class SpriteEntity
     public bool IsDamageFlashVisible => _damageFlashTimer > 0.0f;
     public int ContactDamage { get; set; } = 10;
     public float ContactDamageRadius { get; set; } = 0.65f;
+    public bool IsAiControlled { get; set; }
+    public float DetectionRange { get; set; } = 6.0f;
+    public float MoveSpeed { get; set; } = 1.25f;
+    public float StopDistance { get; set; } = 0.7f;
 
     public SpriteEntity(Vector2 position, int spriteId)
     {
@@ -36,6 +42,34 @@ public class SpriteEntity
     {
         if (_damageFlashTimer > 0.0f)
             _damageFlashTimer -= deltaTime;
+    }
+
+    public void UpdateAi(float deltaTime, Player player, WorldMap worldMap)
+    {
+        if (!IsAiControlled) return;
+        if (!IsVisible || !IsAlive) return;
+        if (player == null || !player.IsAlive) return;
+
+        Vector2 toPlayer = player.Position - Position;
+        float distanceToPlayer = toPlayer.Length();
+
+        if (distanceToPlayer > DetectionRange) return;
+        if (distanceToPlayer <= StopDistance) return;
+
+        Vector2 direction = toPlayer / distanceToPlayer;
+        Vector2 movement = direction * MoveSpeed * deltaTime;
+
+        TryMove(movement, worldMap);
+    }
+
+    private void TryMove(Vector2 movement, WorldMap worldMap)
+    {
+        Vector2 newPosition = Position + movement;
+
+        if (!worldMap.IsWallAt(newPosition.X, Position.Y))
+            Position = new Vector2(newPosition.X, Position.Y);
+        if (!worldMap.IsWallAt(Position.X, newPosition.Y))
+            Position = new Vector2(Position.X, newPosition.Y);
     }
 
     public void TakeDamage(int damage)

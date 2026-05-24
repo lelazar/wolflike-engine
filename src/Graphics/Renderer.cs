@@ -565,6 +565,7 @@ public class Renderer
 
         int visibleSprites = sprites.Count(sprite => sprite.IsVisible);
         int damageableSprites = sprites.Count(sprite => sprite.IsDamageable && sprite.IsAlive);
+        int aiSprites = sprites.Count(sprite => sprite.IsAiControlled && sprite.IsAlive);
 
         SpriteEntity firstEnemy = sprites.FirstOrDefault(sprite => sprite.IsDamageable);
 
@@ -580,6 +581,7 @@ public class Renderer
             $"Invulnerable: {player.IsInvulnerable}\n" +
             $"Visible Sprites: {visibleSprites}\n" +
             $"Alive Enemies: {damageableSprites}\n" +
+            $"AI Enemies: {aiSprites}\n" +
             $"{enemyHealthText}";
 
         Vector2 position = new Vector2(12, 12);
