@@ -2,6 +2,21 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.17] - Basic Enemy AI Movement
+
+### Added
+- Added AI-controlled sprite behavior
+- Added enemy detection range
+- Added enemy movement speed
+- Added enemy stop distance
+- Added simple enemy chase movement
+- Added enemy wall collision during movement
+- Added optional line-of-sight check for enemy chasing
+- Added AI enemy count to debug HUD
+
+### Changed
+- Damageable enemy placeholder can now actively move toward the player
+
 ## [v0.16] - Player Health and Enemy Contact Damage
 
 ### Added
