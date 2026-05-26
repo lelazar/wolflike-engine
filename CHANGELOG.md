@@ -2,6 +2,20 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.18] - Game State and Restart
+
+### Added
+- Added `GameState` enum
+- Added playing, player-dead, and victory states
+- Added restart input with R
+- Added game-state overlay
+- Added victory condition when all damageable enemies are defeated
+- Added death state when player health reaches zero
+
+### Changed
+- Refactored game setup into reusable restart logic
+- Gameplay updates now pause when the player is dead or victory is reached
+
 ## [v0.17] - Basic Enemy AI Movement
 
 ### Added
