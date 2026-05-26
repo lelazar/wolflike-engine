@@ -40,7 +40,7 @@ public class Renderer
         _debugFont = content.Load<SpriteFont>("DebugFont");
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
@@ -60,8 +60,9 @@ public class Renderer
         DrawHitMarker(spriteBatch, weapon);
         DrawPlayerHealthBar(spriteBatch, player);
         DrawDamageOverlay(spriteBatch, player);
-        DrawDeathOverlay(spriteBatch, player);
-        DrawDebugHud(spriteBatch, player, sprites);
+        DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
+        DrawDebugHud(spriteBatch, player, sprites, gameState);
+        DrawGameStateOverlay(spriteBatch, gameState);
 
         // Small debug minimap in the top-left corner
         //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
@@ -559,7 +560,7 @@ public class Renderer
         );
     }
 
-    private void DrawDebugHud(SpriteBatch spriteBatch, Player player, List<SpriteEntity> sprites)
+    private void DrawDebugHud(SpriteBatch spriteBatch, Player player, List<SpriteEntity> sprites, GameState gameState)
     {
         if (_debugFont == null) return;
 
@@ -574,6 +575,7 @@ public class Renderer
             : $"Enemy HP: {firstEnemy.Health}";
 
         string debugText =
+            $"Game State: {gameState}\n" +
             $"Player X: {player.Position.X:0.00}\n" +
             $"Player Y: {player.Position.Y:0.00}\n" +
             $"Angle: {MathHelper.ToDegrees(player.Angle):0.0} deg\n" +
@@ -640,5 +642,49 @@ public class Renderer
         Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
 
         spriteBatch.Draw(_pixel, screenRectangle, new Color(0, 0, 0, 180));
+    }
+
+    private void DrawGameStateOverlay(SpriteBatch spriteBatch, GameState gameState)
+    {
+        if (gameState == GameState.Playing)
+            return;
+
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+
+        Color overlayColor = gameState switch
+        {
+            GameState.PlayerDead => new Color(0, 0, 0, 190),
+            GameState.Victory => new Color(0, 40, 0, 170),
+            _ => new Color(0, 0, 0, 160)
+        };
+
+        spriteBatch.Draw(_pixel, screenRectangle, overlayColor);
+
+        if (_debugFont == null)
+            return;
+
+        string title = gameState switch
+        {
+            GameState.PlayerDead => "YOU DIED",
+            GameState.Victory => "VICTORY",
+            _ => ""
+        };
+
+        string subtitle = "Press R to restart";
+
+        DrawCenterText(spriteBatch, title, GameSettings.SCREENHEIGHT / 2 - 40, 2.0f);
+        DrawCenterText(spriteBatch, subtitle, GameSettings.SCREENHEIGHT / 2 + 20, 1.0f);
+    }
+
+    private void DrawCenterText(SpriteBatch spriteBatch, string text, int y, float scale)
+    {
+        if (_debugFont == null)
+            return;
+
+        Vector2 size = _debugFont.MeasureString(text) * scale;
+
+        Vector2 position = new Vector2(GameSettings.SCREENWIDTH / 2f - size.X / 2f);
+
+        spriteBatch.DrawString(_debugFont, text, position, Color.White, 0.0f, Vector2.Zero, scale, SpriteEffects.None, 0.0f);
     }
 }

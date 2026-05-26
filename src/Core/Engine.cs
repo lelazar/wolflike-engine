@@ -1,13 +1,17 @@
-﻿using WolfLike.src.World;
-using WolfLike.src.Entities;
-using WolfLike.src.Graphics;
-using WolfLike.src.Core;
-using WolfLike.src.Gameplay;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+
+//using System.Numerics;
+using WolfLike.src.Entities;
+using WolfLike.src.Gameplay;
+using WolfLike.src.Graphics;
+using WolfLike.src.World;
+//using static System.Collections.Specialized.BitVector32;
 
 namespace WolfLike.src.Core;
 
@@ -17,7 +21,8 @@ public class Engine
     private Player _player;
     private Renderer _renderer;
     private Raycaster _raycaster;
-    //private RaycastHit _centerRayHit; TODO: Replace this with an array/list of ray hits to simulate it as a camera
+    private GameState _gameState;
+    private KeyboardState _previousKeyboardState;
 
     private RaycastHit[] _rayHits;
     private List<SpriteEntity> _sprites;
@@ -41,12 +46,26 @@ public class Engine
 
     public void Initialize()
     {
+        _renderer = new();
+        _raycaster = new();
+
+        StartNewGame();
+
+        // Why keep _renderer and _raycaster outside StartNewGame()?
+        // Because renderer = rendering system, loaded once; raycaster = reusable service
+        // world / player / weapon / sprites = game session state
+        // And when restarting, we reset the session, not the renderer
+    }
+
+    private void StartNewGame()
+    {
+        _gameState = GameState.Playing;
+
         _worldMap = new();
 
         _player = new Player(new Vector2(2.5f, 7.5f));
 
-        _renderer = new();
-        _raycaster = new();
+        _weapon = new();
 
         _rayHits = new RaycastHit[GameSettings.RAYCOUNT];
 
@@ -73,7 +92,7 @@ public class Engine
             }
         };
 
-        _weapon = new();
+        CastFieldOfViewRays();
     }
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
@@ -84,6 +103,21 @@ public class Engine
     public void Update(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        KeyboardState keyboard = Keyboard.GetState();
+
+        if (IsKeyPressed(keyboard, Keys.R))
+        {
+            StartNewGame();
+            _previousKeyboardState = keyboard;
+            return;
+        }
+
+        if (_gameState != GameState.Playing)
+        {
+            _previousKeyboardState = keyboard;
+            return;
+        }
 
         _player.Update(deltaTime, _worldMap);
 
@@ -110,12 +144,36 @@ public class Engine
             if (_weapon.IsFiring)
                 HandleWeaponFire();  // When the weapon fires, the engine checks for a target
         }
+
+        UpdateGameState();  // Game state is checked after gameplay logic
+
+        _previousKeyboardState = keyboard;
+    }
+
+    // This method ensures restart happens once per key press, not continuously every frame while holding R
+    private bool IsKeyPressed(KeyboardState keyboard, Keys key) => keyboard.IsKeyDown(key) && !_previousKeyboardState.IsKeyDown(key);
+
+    private void UpdateGameState()
+    {
+        if (!_player.IsAlive)
+        {
+            _gameState = GameState.PlayerDead;
+            return;
+        }
+
+        bool anyAliveEnemy = _sprites.Any(sprite =>
+            sprite.IsDamageable &&
+            sprite.IsAlive
+        );
+
+        if (!anyAliveEnemy)
+            _gameState = GameState.Victory;
     }
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
         //_renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState);
     }
 
     // Calculating many ray angles
