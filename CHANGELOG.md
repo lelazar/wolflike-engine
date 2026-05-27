@@ -2,6 +2,20 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.19] - Multiple Enemies and Level Tuning
+
+### Added
+- Added multiple enemy instances
+- Added enemy stat variations for speed, health, detection range, and contact damage
+- Added helper methods for enemy and pickup creation
+- Added support for enemy max health
+- Added larger test map layout
+- Added improved debug HUD enemy health list
+
+### Changed
+- Victory condition now supports multiple damageable enemies
+- Level spawn positions were retuned for a larger encounter area
+
 ## [v0.18] - Game State and Restart
 
 ### Added
