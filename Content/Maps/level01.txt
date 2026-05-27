@@ -1,0 +1,23 @@
+﻿# WolfLike level file
+# 0 = floor
+# 1 = stone wall
+# 2 = brick wall
+# 3 = metal wall
+# P = player start
+# E = enemy
+# T = tough enemy
+# F = fast enemy
+# H = pickup placeholder
+
+111111111111
+100000000001
+10F020003T01
+100020003001
+100020003001
+100000100001
+100110101101
+100000000001
+10200H000301
+102P0000E301
+100000000001
+111111111111

@@ -14,4 +14,6 @@ public static class GameSettings
     public const float MAXRAYDISTANCE = 20.0f;
 
     public const int TEXTURESIZE = 64;
+
+    public const string DEFAULTLEVELFILE = "level01.txt";
 }

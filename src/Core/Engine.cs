@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 //using System.Numerics;
 using WolfLike.src.Entities;
@@ -28,6 +29,8 @@ public class Engine
 
     private Weapon _weapon;
 
+    private LevelLoader _levelLoader;
+
     public Player Player => _player;
     public IReadOnlyList<SpriteEntity> Sprites => _sprites;
     public Weapon Weapon => _weapon;
@@ -47,6 +50,7 @@ public class Engine
     {
         _renderer = new();
         _raycaster = new();
+        _levelLoader = new();
 
         StartNewGame();
 
@@ -60,50 +64,26 @@ public class Engine
     {
         _gameState = GameState.Playing;
 
-        _worldMap = new();
+        string levelPath = Path.Combine(
+                AppContext.BaseDirectory,
+                "Content",
+                "Maps",
+                GameSettings.DEFAULTLEVELFILE
+            );
 
-        Vector2 playerStartPosition = new Vector2(3.5f, 9.5f);  // Spawn player near lower-left
-        ValidateSpawnPosition(playerStartPosition, "Player");
-        _player = new Player(playerStartPosition);  
+        LevelData levelData = _levelLoader.LoadFromFile(levelPath);
+
+        _worldMap = new(levelData.Tiles);
+
+        ValidateSpawnPosition(levelData.PlayerStartPosition, "Player");
+
+        _player = new Player(levelData.PlayerStartPosition);  
 
         _weapon = new();
 
         _rayHits = new RaycastHit[GameSettings.RAYCOUNT];
 
-        _sprites = new List<SpriteEntity>
-        {
-            // Standard enemy
-            CreateEnemy(
-                new Vector2(8.5f, 8.5f),
-                moveSpeed: 1.2f,
-                contactDamage: 10,
-                detectionRange: 7.0f,
-                health: 100
-            ),
-
-            // Slower enemy
-            CreateEnemy(
-                new Vector2(9.5f, 2.5f),
-                moveSpeed: 0.85f,
-                contactDamage: 8,
-                detectionRange: 6.0f,
-                health: 150,
-                scale: 0.95f
-            ),
-
-            // Faster enemy
-            CreateEnemy(
-                new Vector2(2.5f, 2.5f),
-                moveSpeed: 1.6f,
-                contactDamage: 12,
-                detectionRange: 8.0f,
-                health: 75,
-                scale: 0.9f
-            ),
-
-            // Decorative / pickup placeholder
-            CreatePickupPlaceholder(new Vector2(5.5f, 8.5f))
-        };
+        _sprites = CreateSpritesFromLevel(levelData);
 
         CastFieldOfViewRays();
     }
@@ -364,5 +344,56 @@ public class Engine
     {
         if (_worldMap.IsWallAt(position.X, position.Y))
             throw new InvalidOperationException($"{name} spawn position is inside a wall. Position: {position}");
+    }
+
+    private List<SpriteEntity> CreateSpritesFromLevel(LevelData levelData)
+    {
+        List<SpriteEntity> sprites = new();
+
+        foreach (LevelEntitySpawn spawn in levelData.EntitySpawns)
+        {
+            SpriteEntity sprite = spawn.EntityType switch
+            {
+                LevelEntityType.StandardEnemy => CreateEnemy(
+                    spawn.Position,
+                    moveSpeed: 1.2f,
+                    contactDamage: 10,
+                    detectionRange: 7.0f,
+                    health: 100
+                ),
+
+                LevelEntityType.ToughEnemy => CreateEnemy(
+                    spawn.Position,
+                    moveSpeed: 0.85f,
+                    contactDamage: 8,
+                    detectionRange: 6.0f,
+                    health: 150,
+                    scale: 1.1f
+                ),
+
+                LevelEntityType.FastEnemy => CreateEnemy(
+                    spawn.Position,
+                    moveSpeed: 1.6f,
+                    contactDamage: 12,
+                    detectionRange: 8.0f,
+                    health: 75,
+                    scale: 0.9f
+                ),
+
+                LevelEntityType.PickupPlaceholder => CreatePickupPlaceholder(
+                    spawn.Position
+                ),
+
+                _ => throw new InvalidOperationException(
+                    $"Unsupported entity spawn type: {spawn.EntityType}"
+                )
+            };
+
+            ValidateSpawnPosition(sprite.Position, spawn.EntityType.ToString());
+
+            sprites.Add(sprite);
+        }
+
+        return sprites;
     }
 }
