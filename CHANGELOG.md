@@ -2,6 +2,24 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.20] - Simple Map Loader
+
+### Added
+- Added text-based level file format
+- Added `LevelLoader`
+- Added `LevelData`
+- Added `LevelEntitySpawn`
+- Added `LevelEntityType`
+- Added support for player spawn from level files
+- Added support for enemy and pickup spawns from level files
+- Added level file validation
+- Added runtime map loading from `Content/Maps/level01.txt`
+
+### Changed
+- `WorldMap` now receives tile data from loaded level data
+- Game restart now reloads level data from file
+- Map layout is no longer hardcoded in `WorldMap.cs`
+
 ## [v0.19] - Multiple Enemies and Level Tuning
 
 ### Added
