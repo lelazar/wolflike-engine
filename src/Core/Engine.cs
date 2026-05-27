@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 //using System.Numerics;
 using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
@@ -63,7 +62,9 @@ public class Engine
 
         _worldMap = new();
 
-        _player = new Player(new Vector2(2.5f, 7.5f));
+        Vector2 playerStartPosition = new Vector2(3.5f, 9.5f);  // Spawn player near lower-left
+        ValidateSpawnPosition(playerStartPosition, "Player");
+        _player = new Player(playerStartPosition);  
 
         _weapon = new();
 
@@ -71,25 +72,37 @@ public class Engine
 
         _sprites = new List<SpriteEntity>
         {
-            new SpriteEntity(new Vector2(6.5f, 5.5f), 1)
-            {
-                Scale = 1.0f,
-                IsDamageable = true,    // Only the green sprite can be damaged
-                CollisionRadius = 0.35f,
-                ContactDamage = 10,
-                ContactDamageRadius = 0.75f,
-                IsAiControlled = true,  // Only the green enemy moves
-                DetectionRange = 7.0f,  // 4.0 - short awareness; 7.0 - medium awareness; 10.0 - aggressive awareness
-                MoveSpeed = 1.2f,       // 0.8 - slow zombie; 1.2 - normal enemy; 2.0 - fast enemy
-                StopDistance = 0.75f    // 0.65 - close attack; 0.9  - safer contact range; 1.2  - enemy stops farther away
-            },
+            // Standard enemy
+            CreateEnemy(
+                new Vector2(8.5f, 8.5f),
+                moveSpeed: 1.2f,
+                contactDamage: 10,
+                detectionRange: 7.0f,
+                health: 100
+            ),
 
-            new SpriteEntity(new Vector2(2.5f, 2.5f), 2)
-            {
-                Scale = 0.65f,
-                IsDamageable = false,
-                IsAiControlled = false
-            }
+            // Slower enemy
+            CreateEnemy(
+                new Vector2(9.5f, 2.5f),
+                moveSpeed: 0.85f,
+                contactDamage: 8,
+                detectionRange: 6.0f,
+                health: 150,
+                scale: 0.95f
+            ),
+
+            // Faster enemy
+            CreateEnemy(
+                new Vector2(2.5f, 2.5f),
+                moveSpeed: 1.6f,
+                contactDamage: 12,
+                detectionRange: 8.0f,
+                health: 75,
+                scale: 0.9f
+            ),
+
+            // Decorative / pickup placeholder
+            CreatePickupPlaceholder(new Vector2(5.5f, 8.5f))
         };
 
         CastFieldOfViewRays();
@@ -325,5 +338,31 @@ public class Engine
             return true;
 
         return wallHit.Distance > distanceToPlayer;
+    }
+
+    // The below functions let us create enemies cleanly
+    // Example: CreateEnemy(new Vector2(6.5f, 5.5f), 1.2f, 10, 7.0f)
+    // enemy at 6.5, 5.5; move speed 1.2; contact damage 10; detection range 7.0
+    // Example 2: Define health: 150 for a tougher enemy
+    private SpriteEntity CreateEnemy(Vector2 position, float moveSpeed, int contactDamage, float detectionRange, int health = 100, float scale = 1.0f)
+    {
+        ValidateSpawnPosition(position, "Enemy");
+
+        SpriteEntity enemy = new SpriteEntity(position, 1) { Scale = scale, IsDamageable = true, CollisionRadius = 0.35f, ContactDamage = contactDamage, ContactDamageRadius = 0.75f, IsAiControlled = true, DetectionRange = detectionRange, MoveSpeed = moveSpeed, StopDistance = 0.75f };
+
+        enemy.SetHealth(health);
+
+        return enemy;
+    }
+
+    private SpriteEntity CreatePickupPlaceholder(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false };
+
+    // TODO: modify CreateEnemy() in the future to validate position with the below function
+    private bool IsValidSpawnPosition(Vector2 position) => !_worldMap.IsWallAt(position.X, position.Y);
+
+    private void ValidateSpawnPosition(Vector2 position, string name)
+    {
+        if (_worldMap.IsWallAt(position.X, position.Y))
+            throw new InvalidOperationException($"{name} spawn position is inside a wall. Position: {position}");
     }
 }

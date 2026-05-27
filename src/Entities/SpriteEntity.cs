@@ -21,6 +21,7 @@ public class SpriteEntity
     public float Scale { get; set; } = 1.0f;
     public bool IsVisible { get; set; } = true;
     public bool IsDamageable { get; set; }
+    public int MaxHealth { get; private set; } = 100;
     public int Health { get; private set; } = 100;
     public float CollisionRadius { get; set; } = 0.35f;
     public bool IsAlive => Health > 0;
@@ -85,5 +86,13 @@ public class SpriteEntity
             Health = 0;
             IsVisible = false;
         }
+    }
+
+    public void SetHealth(int health)
+    {
+        // With this method, we can create enemies with different HP
+
+        MaxHealth = Math.Max(1, health);
+        Health = MaxHealth;
     }
 }

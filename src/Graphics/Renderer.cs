@@ -568,11 +568,14 @@ public class Renderer
         int damageableSprites = sprites.Count(sprite => sprite.IsDamageable && sprite.IsAlive);
         int aiSprites = sprites.Count(sprite => sprite.IsAiControlled && sprite.IsAlive);
 
-        SpriteEntity firstEnemy = sprites.FirstOrDefault(sprite => sprite.IsDamageable);
+        //SpriteEntity firstEnemy = sprites.FirstOrDefault(sprite => sprite.IsDamageable);
+        List<SpriteEntity> aliveEnemies = sprites
+            .Where(sprite => sprite.IsDamageable && sprite.IsAlive)
+            .ToList();
 
-        string enemyHealthText = firstEnemy == null
-            ? "Enemy HP: N/A"
-            : $"Enemy HP: {firstEnemy.Health}";
+        string enemyHealthText = aliveEnemies.Count == 0
+            ? "Enemy HP: none"
+            : $"Enemy HP: {string.Join(", ", aliveEnemies.Select(enemy => enemy.Health))}";
 
         string debugText =
             $"Game State: {gameState}\n" +
