@@ -2,6 +2,20 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.21] - Pickups and Healing
+
+### Added
+- Added pickup entity support
+- Added healing pickup behavior
+- Added player healing logic
+- Added heal feedback overlay
+- Added pickup collection handling
+- Added pickup counter to debug HUD
+
+### Changed
+- Level `H` spawn now creates a functional healing pickup
+- Pickups are removed only when healing is successfully applied
+
 ## [v0.20] - Simple Map Loader
 
 ### Added
