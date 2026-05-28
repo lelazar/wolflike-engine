@@ -196,7 +196,7 @@ public class TextureManager
                 bool horizontal = y >= 28 && y <= 36 && x >= 16 && x <= 48;
 
                 if (vertical || horizontal)
-                    color = new Color(230, 220, 70, 255);
+                    color = new Color(80, 230, 100, 255);
 
                 data[y * width + x] = color;
             }

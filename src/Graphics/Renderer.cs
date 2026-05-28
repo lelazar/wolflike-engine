@@ -13,7 +13,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-//using System.Numerics;
 using WolfLike.src.Core;
 using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
@@ -60,6 +59,7 @@ public class Renderer
         DrawHitMarker(spriteBatch, weapon);
         DrawPlayerHealthBar(spriteBatch, player);
         DrawDamageOverlay(spriteBatch, player);
+        DrawHealOverlay(spriteBatch, player);
         DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
         DrawDebugHud(spriteBatch, player, sprites, gameState);
         DrawGameStateOverlay(spriteBatch, gameState);
@@ -567,6 +567,7 @@ public class Renderer
         int visibleSprites = sprites.Count(sprite => sprite.IsVisible);
         int damageableSprites = sprites.Count(sprite => sprite.IsDamageable && sprite.IsAlive);
         int aiSprites = sprites.Count(sprite => sprite.IsAiControlled && sprite.IsAlive);
+        int visiblePickups = sprites.Count(sprite => sprite.IsPickup && sprite.IsVisible);
 
         //SpriteEntity firstEnemy = sprites.FirstOrDefault(sprite => sprite.IsDamageable);
         List<SpriteEntity> aliveEnemies = sprites
@@ -587,6 +588,7 @@ public class Renderer
             $"Visible Sprites: {visibleSprites}\n" +
             $"Alive Enemies: {damageableSprites}\n" +
             $"AI Enemies: {aiSprites}\n" +
+            $"Pickups: {visiblePickups}\n" +
             $"{enemyHealthText}";
 
         Vector2 position = new Vector2(12, 12);
@@ -689,5 +691,19 @@ public class Renderer
         Vector2 position = new Vector2(GameSettings.SCREENWIDTH / 2f - size.X / 2f);
 
         spriteBatch.DrawString(_debugFont, text, position, Color.White, 0.0f, Vector2.Zero, scale, SpriteEffects.None, 0.0f);
+    }
+
+    private void DrawHealOverlay(SpriteBatch spriteBatch, Player player)
+    {
+        // When the player collects a healing pickup, the screen briefly flashes green
+
+        if (!player.IsHealFlashVisible) return;
+
+        Rectangle screenRectangle = new Rectangle(
+                0,
+                0,
+                GameSettings.SCREENWIDTH,
+                GameSettings.SCREENHEIGHT
+            );
     }
 }

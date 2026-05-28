@@ -125,6 +125,8 @@ public class Engine
                 sprite.UpdateAi(deltaTime, _player, _worldMap);
         }
 
+        HandlePickupCollection();
+
         // Need to check enemy contact every frame
         HandleEnemyContactDamage();
         
@@ -335,7 +337,7 @@ public class Engine
         return enemy;
     }
 
-    private SpriteEntity CreatePickupPlaceholder(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false };
+    private SpriteEntity CreateHealingPickup(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, HealAmount = 25, CollisionRadius = 0.35f };
 
     // TODO: modify CreateEnemy() in the future to validate position with the below function
     private bool IsValidSpawnPosition(Vector2 position) => !_worldMap.IsWallAt(position.X, position.Y);
@@ -380,9 +382,7 @@ public class Engine
                     scale: 0.9f
                 ),
 
-                LevelEntityType.PickupPlaceholder => CreatePickupPlaceholder(
-                    spawn.Position
-                ),
+                LevelEntityType.PickupPlaceholder => CreateHealingPickup(spawn.Position),
 
                 _ => throw new InvalidOperationException(
                     $"Unsupported entity spawn type: {spawn.EntityType}"
@@ -395,5 +395,29 @@ public class Engine
         }
 
         return sprites;
+    }
+
+    private void HandlePickupCollection()
+    {
+        if (!_player.IsAlive) return;
+
+        foreach (SpriteEntity sprite in _sprites)
+        {
+            if (!sprite.IsVisible) continue;
+            if (!sprite.IsPickup) continue;
+
+            float distance = Vector2.Distance(_player.Position, sprite.Position);
+
+            // Add + 0.25f because this gives a reasonable pickup radius without needing a separate property yet
+            if (distance > sprite.CollisionRadius + 0.25f) continue;
+
+            /* Heal is not consumed when HP is full */
+            //bool wasHealed = _player.Heal(sprite.HealAmount);
+            //if (wasHealed) sprite.IsVisible = false;
+
+            /* Heal is consumed when HP is full */
+            _player.Heal(sprite.HealAmount);
+            sprite.IsVisible = false;
+        }
     }
 }

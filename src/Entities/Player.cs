@@ -9,9 +9,11 @@ public class Player
 {
     private const float DAMAGEFLASHDURATIONSECONDS = 0.18f;
     private const float INVULNERABILITYDURATIONSECONDS = 0.75f;
+    private const float HEALFLASHDURATIONSECONDS = 0.18f;
 
     private float _damageFlashTimer;
     private float _invulnerabilityTimer;
+    private float _healFlashTimer;
 
     public Vector2 Position { get; private set; }
     public float Angle { get; private set; }
@@ -22,6 +24,7 @@ public class Player
     public bool IsAlive => Health > 0;
     public bool IsDamageFlashVisible => _damageFlashTimer > 0.0f;
     public bool IsInvulnerable => _invulnerabilityTimer > 0.0f;
+    public bool IsHealFlashVisible => _healFlashTimer > 0.0f;
 
     public Player(Vector2 startPosition)
     {
@@ -31,7 +34,7 @@ public class Player
 
     public void Update(float deltaTime, WorldMap worldMap)
     {
-        UpdateDamageTimers(deltaTime);
+        UpdateStatusTimers(deltaTime);
 
         if (!IsAlive) return;
 
@@ -54,12 +57,14 @@ public class Player
         _invulnerabilityTimer = INVULNERABILITYDURATIONSECONDS;
     }
 
-    private void UpdateDamageTimers(float deltaTime)
+    private void UpdateStatusTimers(float deltaTime)
     {
         if (_damageFlashTimer > 0.0f)
             _damageFlashTimer -= deltaTime;
         if (_invulnerabilityTimer > 0.0f)
             _invulnerabilityTimer -= deltaTime;
+        if (_healFlashTimer > 0.0f)
+            _healFlashTimer -= deltaTime;
     }
 
     private void HandleMovement(KeyboardState keyboard, float deltaTime, WorldMap worldMap)
@@ -106,5 +111,22 @@ public class Player
 
         if (keyboard.IsKeyDown(Keys.E))
             Angle += RotationSpeed * deltaTime;
+    }
+
+    public bool Heal(int amount)
+    {
+        // This method only returns true if healing actually happened
+
+        if (!IsAlive) return false;
+        if (amount <= 0) return false;
+        if (Health >= MaxHealth) return false;
+
+        Health += amount;
+
+        if (Health > MaxHealth) Health = MaxHealth;
+
+        _healFlashTimer = HEALFLASHDURATIONSECONDS;
+
+        return true;
     }
 }
