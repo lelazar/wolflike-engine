@@ -58,10 +58,12 @@ public class Renderer
         DrawCrosshair(spriteBatch);
         DrawHitMarker(spriteBatch, weapon);
         DrawPlayerHealthBar(spriteBatch, player);
+        DrawAmmoCounter(spriteBatch, weapon);
+        DrawNoAmmoWarning(spriteBatch, weapon);
         DrawDamageOverlay(spriteBatch, player);
         DrawHealOverlay(spriteBatch, player);
         DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
-        DrawDebugHud(spriteBatch, player, sprites, gameState);
+        DrawDebugHud(spriteBatch, player, sprites, weapon, gameState);
         DrawGameStateOverlay(spriteBatch, gameState);
 
         // Small debug minimap in the top-left corner
@@ -560,7 +562,7 @@ public class Renderer
         );
     }
 
-    private void DrawDebugHud(SpriteBatch spriteBatch, Player player, List<SpriteEntity> sprites, GameState gameState)
+    private void DrawDebugHud(SpriteBatch spriteBatch, Player player, List<SpriteEntity> sprites, Weapon weapon, GameState gameState)
     {
         if (_debugFont == null) return;
 
@@ -584,6 +586,7 @@ public class Renderer
             $"Player Y: {player.Position.Y:0.00}\n" +
             $"Angle: {MathHelper.ToDegrees(player.Angle):0.0} deg\n" +
             $"Player HP: {player.Health}/{player.MaxHealth}\n" +
+            $"Ammo: {weapon.Ammo}/{weapon.MaxAmmo}\n" +
             $"Invulnerable: {player.IsInvulnerable}\n" +
             $"Visible Sprites: {visibleSprites}\n" +
             $"Alive Enemies: {damageableSprites}\n" +
@@ -705,5 +708,49 @@ public class Renderer
                 GameSettings.SCREENWIDTH,
                 GameSettings.SCREENHEIGHT
             );
+    }
+
+    private void DrawAmmoCounter(SpriteBatch spriteBatch, Weapon weapon)
+    {
+        // This method gives us a simple bottom-right ammo display
+
+        if (_debugFont == null || weapon == null) return;
+
+        string ammoText = $"AMMO {weapon.Ammo}/{weapon.MaxAmmo}";
+
+        Vector2 size = _debugFont.MeasureString(ammoText);
+
+        Vector2 position = new Vector2(GameSettings.SCREENWIDTH - size.X - 24,
+            GameSettings.SCREENHEIGHT - 48);
+
+        Rectangle backgroundRectangle = new Rectangle(
+            (int)position.X - 8,
+            (int)position.Y - 6,
+            (int)size.X + 16,
+            (int)size.Y + 12
+        );
+
+        Color textColor = weapon.Ammo == 0 ? new Color(230, 60, 60) : Color.White;
+
+        spriteBatch.Draw(_pixel, backgroundRectangle, new Color(0, 0, 0, 180));
+
+        spriteBatch.DrawString(_debugFont, ammoText, position, textColor);
+    }
+
+    private void DrawNoAmmoWarning(SpriteBatch spriteBatch, Weapon weapon)
+    {
+        // If a shot is made with 0 ammo, we can see a NO AMMO feedback
+
+        if (_debugFont == null || weapon == null) return;
+        if (!weapon.IsEmptyClickVisible) return;
+
+        string text = "NO AMMO";
+
+        Vector2 size = _debugFont.MeasureString(text);
+
+        Vector2 position = new Vector2(GameSettings.SCREENWIDTH / 2f - size.X / 2f,
+            GameSettings.SCREENHEIGHT / 2f + 44);
+
+        spriteBatch.DrawString(_debugFont, text, position, new Color(230, 60, 60));
     }
 }

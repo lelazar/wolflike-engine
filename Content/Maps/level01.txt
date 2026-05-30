@@ -7,7 +7,8 @@
 # E = enemy
 # T = tough enemy
 # F = fast enemy
-# H = pickup placeholder
+# H = healing pickup
+# A = ammo pickup
 
 111111111111
 100000000001
@@ -16,7 +17,7 @@
 100020003001
 100000100001
 100110101101
-100000000001
+100000A00001
 10200H000301
 102P0000E301
 100000000001

@@ -31,6 +31,7 @@ public class TextureManager
 
         _spriteTextures[1] = CreateEnemyPlaceholderTexture(graphicsDevice, size, size);
         _spriteTextures[2] = CreatePickupPlaceholderTexture(graphicsDevice, size, size);
+        _spriteTextures[3] = CreateAmmoPickupTexture(graphicsDevice, size, size);
 
         _weaponTextures[1] = CreateWeaponPlaceholderTexture(graphicsDevice, 160, 120);
         _weaponTextures[2] = CreateMuzzleFlashTexture(graphicsDevice, 96, 96);
@@ -290,6 +291,48 @@ public class TextureManager
 
                 if (distance < 12)
                     color = new Color(255, 245, 180, 255);
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
+    }
+
+    private Texture2D CreateAmmoPickupTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color = Color.Transparent;
+
+                bool box =
+                    x >= 14 && x <= 50 &&
+                    y >= 22 && y <= 46;
+
+                bool boxTop =
+                    x >= 14 && x <= 50 &&
+                    y >= 22 && y <= 27;
+
+                bool stripe =
+                    x >= 18 && x <= 46 &&
+                    y >= 32 && y <= 36;
+
+                bool outline =
+                    (x >= 12 && x <= 52 && y >= 20 && y <= 22) ||
+                    (x >= 12 && x <= 52 && y >= 46 && y <= 48) ||
+                    (x >= 12 && x <= 14 && y >= 20 && y <= 48) ||
+                    (x >= 50 && x <= 52 && y >= 20 && y <= 48);
+
+                if (box) color = new Color(120, 95, 45, 255);
+                if (boxTop) color = new Color(180, 145, 65, 255);
+                if (stripe) color = new Color(230, 210, 90, 255);
+                if (outline) color = new Color(35, 25, 10, 255);
 
                 data[y * width + x] = color;
             }

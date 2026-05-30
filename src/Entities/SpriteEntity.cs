@@ -32,8 +32,11 @@ public class SpriteEntity
     public float DetectionRange { get; set; } = 6.0f;
     public float MoveSpeed { get; set; } = 1.25f;
     public float StopDistance { get; set; } = 0.7f;
-    public bool IsPickup { get; set; }
+    public bool IsPickup { get; set; }  // generic pickup
     public int HealAmount { get; set; }
+    public bool IsAmmoPickup { get; set; }  // ammo pickup
+    public bool IsHealingPickup { get; set; }  // healing pickup
+    public int AmmoAmount { get; set; }
 
     public SpriteEntity(Vector2 position, int spriteId)
     {

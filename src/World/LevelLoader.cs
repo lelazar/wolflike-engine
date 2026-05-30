@@ -4,8 +4,6 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 
 namespace WolfLike.src.World;
@@ -126,10 +124,20 @@ public class LevelLoader
                 levelData.EntitySpawns.Add(
                     new LevelEntitySpawn(
                         ToCenteredWorldPosition(x, y),
-                        LevelEntityType.PickupPlaceholder
+                        LevelEntityType.HealingPickup
                     )
                 );
                 break;
+
+            case 'A':
+                levelData.Tiles[y, x] = 0;
+                levelData.EntitySpawns.Add(
+                    new LevelEntitySpawn(
+                        ToCenteredWorldPosition(x, y),
+                        LevelEntityType.AmmoPickup
+                    )
+                );
+            break;
 
             default:
                 throw new InvalidOperationException(

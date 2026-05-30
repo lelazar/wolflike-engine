@@ -6,12 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-//using System.Numerics;
 using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
 using WolfLike.src.Graphics;
 using WolfLike.src.World;
-//using static System.Collections.Specialized.BitVector32;
 
 namespace WolfLike.src.Core;
 
@@ -337,7 +335,9 @@ public class Engine
         return enemy;
     }
 
-    private SpriteEntity CreateHealingPickup(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, HealAmount = 25, CollisionRadius = 0.35f };
+    private SpriteEntity CreateHealingPickup(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsAmmoPickup = false, HealAmount = 25, CollisionRadius = 0.35f };
+
+    private SpriteEntity CreateAmmoPickup(Vector2 position) => new SpriteEntity(position, 3) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsAmmoPickup = true, AmmoAmount = 6, CollisionRadius = 0.35f };
 
     // TODO: modify CreateEnemy() in the future to validate position with the below function
     private bool IsValidSpawnPosition(Vector2 position) => !_worldMap.IsWallAt(position.X, position.Y);
@@ -382,7 +382,9 @@ public class Engine
                     scale: 0.9f
                 ),
 
-                LevelEntityType.PickupPlaceholder => CreateHealingPickup(spawn.Position),
+                LevelEntityType.HealingPickup => CreateHealingPickup(spawn.Position),
+
+                LevelEntityType.AmmoPickup => CreateAmmoPickup(spawn.Position),
 
                 _ => throw new InvalidOperationException(
                     $"Unsupported entity spawn type: {spawn.EntityType}"
@@ -411,13 +413,15 @@ public class Engine
             // Add + 0.25f because this gives a reasonable pickup radius without needing a separate property yet
             if (distance > sprite.CollisionRadius + 0.25f) continue;
 
-            /* Heal is not consumed when HP is full */
-            //bool wasHealed = _player.Heal(sprite.HealAmount);
-            //if (wasHealed) sprite.IsVisible = false;
+            bool wasCollected = false;
 
-            /* Heal is consumed when HP is full */
-            _player.Heal(sprite.HealAmount);
-            sprite.IsVisible = false;
+            if (sprite.IsHealingPickup)
+                wasCollected = _player.Heal(sprite.HealAmount);
+            else if (sprite.IsAmmoPickup)
+                wasCollected = _weapon.AddAmmo(sprite.AmmoAmount);
+
+            if (wasCollected)
+                sprite.IsVisible = false;
         }
     }
 }
