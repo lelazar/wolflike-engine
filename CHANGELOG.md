@@ -2,6 +2,24 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.22] - Ammo System and Ammo Pickups
+
+### Added
+- Added weapon ammo and max ammo
+- Added ammo consumption when firing
+- Added no-ammo firing behavior
+- Added ammo pickup entity support
+- Added `A` level symbol for ammo pickups
+- Added procedural ammo pickup sprite
+- Added ammo pickup collection logic
+- Added ammo counter HUD
+- Added no-ammo warning feedback
+- Added ammo data to debug HUD
+
+### Changed
+- Weapon can no longer fire when ammo is empty
+- Pickups now support separate healing and ammo behavior
+
 ## [v0.21] - Pickups and Healing
 
 ### Added
