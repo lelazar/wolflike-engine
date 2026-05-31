@@ -24,6 +24,13 @@ public class WorldMap
         return _tiles[y, x];  // The first number is the row, meaning Y. The second number is the column, meaning X
     }
 
+    public void SetTile(int x, int y, int tileId)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height)
+            return;
+        _tiles[y, x] = tileId;
+    }
+
     public bool IsWall(int x, int y) => GetTile(x, y) > 0;
     // Now with > 0, the meaning becomes:
     // 0 = empty / walkable
@@ -31,6 +38,7 @@ public class WorldMap
     // 2 = wall type 2 / solid
     // 3 = wall type 3 / solid
     // That is needed, because with == 1, it did not recognize brick and metal walls (Tile IDs of 2 and 3) as collidable walls!
+    // A closed door is still solid because of this method, so tile 4 will block movement and raycasting until opened
 
     public bool IsWallAt(float x, float y)
     {
@@ -38,5 +46,14 @@ public class WorldMap
         int mapY = (int)y;
 
         return IsWall(mapX, mapY);
+    }
+
+    public bool IsDoor(int x, int y) => GetTile(x, y) == 4;
+
+    public void OpenDoor(int x, int y)
+    {
+        if (!IsDoor(x, y)) return;
+
+        SetTile(x, y, 0);
     }
 }

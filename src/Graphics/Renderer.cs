@@ -39,7 +39,7 @@ public class Renderer
         _debugFont = content.Load<SpriteFont>("DebugFont");
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState, bool canInteract)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
@@ -60,6 +60,7 @@ public class Renderer
         DrawPlayerHealthBar(spriteBatch, player);
         DrawAmmoCounter(spriteBatch, weapon);
         DrawNoAmmoWarning(spriteBatch, weapon);
+        DrawInteractionPrompt(spriteBatch, canInteract);
         DrawDamageOverlay(spriteBatch, player);
         DrawHealOverlay(spriteBatch, player);
         DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
@@ -70,6 +71,34 @@ public class Renderer
         //DrawMiniMap(spriteBatch, worldMap, player, rayHits);
 
         spriteBatch.End();
+    }
+
+    private void DrawInteractionPrompt(SpriteBatch spriteBatch, bool canInteract)
+    {
+        // When the player looks at a door, the prompt appears
+
+        if (!canInteract) return;
+        if (_debugFont == null) return;
+
+        string text = "Press F to open door";
+
+        Vector2 size = _debugFont.MeasureString(text);
+
+        Vector2 position = new Vector2(
+            GameSettings.SCREENWIDTH / 2f - size.X / 2f,
+            GameSettings.SCREENHEIGHT / 2f + 80
+        );
+
+        Rectangle backgroundRectangle = new Rectangle(
+            (int)position.X - 8,
+            (int)position.Y -6,
+            (int)size.X + 16,
+            (int)size.Y + 12
+        );
+
+        spriteBatch.Draw(_pixel, backgroundRectangle, new Color(0, 0, 0, 160));
+
+        spriteBatch.DrawString(_debugFont, text, position, Color.White);
     }
 
     private void DrawCeilingAndFloor(SpriteBatch spriteBatch)

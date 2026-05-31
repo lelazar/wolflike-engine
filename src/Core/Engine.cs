@@ -112,6 +112,9 @@ public class Engine
 
         _player.Update(deltaTime, _worldMap);
 
+        if (IsKeyPressed(keyboard, Keys.F))
+            TryInteract();
+
         // Now sprites need to update every frame
         foreach (SpriteEntity sprite in _sprites)
         {
@@ -165,8 +168,11 @@ public class Engine
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        //_renderer.DrawTopDownView(spriteBatch, _worldMap, _player, _rayHits);
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState);
+        // Show "Press F to open door" when the player is looking at a door
+        bool canInteract = _gameState == GameState.Playing &&
+            FindDoorInFrontOfPlayer() != null;
+
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState, canInteract);
     }
 
     // Calculating many ray angles
@@ -423,5 +429,48 @@ public class Engine
             if (wasCollected)
                 sprite.IsVisible = false;
         }
+    }
+
+    private void TryInteract()
+    {
+        if (!_player.IsAlive) return;
+
+        Point? doorTile = FindDoorInFrontOfPlayer();
+
+        if (doorTile == null) return;
+
+        _worldMap.OpenDoor(doorTile.Value.X, doorTile.Value.Y);
+
+        CastFieldOfViewRays();
+    }
+
+    private Point? FindDoorInFrontOfPlayer()
+    {
+        // This method checks a short line in front of the player
+        // If the player is facing a door within 1.25 world units, pressin F opens it
+
+        const float INTERACTION_DISTANCE = 1.25f;
+        const float STEP_SIZE = 0.05f;
+
+        Vector2 direction = new Vector2(
+            MathF.Cos(_player.Angle),
+            MathF.Sin(_player.Angle)
+        );
+
+        float distance = 0.0f;
+
+        while (distance < INTERACTION_DISTANCE)
+        {
+            Vector2 checkPosition = _player.Position + direction * distance;
+
+            int mapX = (int)checkPosition.X;
+            int mapY = (int)checkPosition.Y;
+
+            if (_worldMap.IsDoor(mapX, mapY)) return new Point(mapX, mapY);
+
+            distance += STEP_SIZE;
+        }
+
+        return null;
     }
 }

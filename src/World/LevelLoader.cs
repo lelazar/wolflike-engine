@@ -70,6 +70,7 @@ public class LevelLoader
     {
         switch (symbol)
         {
+            #region Tile symbols
             case '0':
                 levelData.Tiles[y, x] = 0;
                 break;
@@ -86,6 +87,12 @@ public class LevelLoader
                 levelData.Tiles[y, x] = 3;
                 break;
 
+            case 'D':
+                levelData.Tiles[y, x] = 4;
+                break;
+            #endregion
+
+            #region Entity symbols
             case 'P':
                 levelData.Tiles[y, x] = 0;
                 levelData.PlayerStartPosition = ToCenteredWorldPosition(x, y);
@@ -138,6 +145,8 @@ public class LevelLoader
                     )
                 );
             break;
+
+            #endregion
 
             default:
                 throw new InvalidOperationException(

@@ -28,6 +28,7 @@ public class TextureManager
         _wallTextures[1] = CreateStoneTexture(graphicsDevice, size, size);
         _wallTextures[2] = CreateBrickTexture(graphicsDevice, size, size);
         _wallTextures[3] = CreateMetalTexture(graphicsDevice, size, size);
+        _wallTextures[4] = CreateDoorTexture(graphicsDevice, size, size);
 
         _spriteTextures[1] = CreateEnemyPlaceholderTexture(graphicsDevice, size, size);
         _spriteTextures[2] = CreatePickupPlaceholderTexture(graphicsDevice, size, size);
@@ -35,6 +36,53 @@ public class TextureManager
 
         _weaponTextures[1] = CreateWeaponPlaceholderTexture(graphicsDevice, 160, 120);
         _weaponTextures[2] = CreateMuzzleFlashTexture(graphicsDevice, 96, 96);
+    }
+
+    private Texture2D CreateDoorTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        // With this method we can render brown wooden doors
+
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color;
+
+                bool border =
+                    x < 4 || x >= width - 4 ||
+                    y < 4 || y >= height - 4;
+
+                bool centerLine =
+                    x >= width / 2 - 1 &&
+                    x <= width / 2 + 1;
+
+                bool handle =
+                    x >= width / 2 + 12 &&
+                    x <= width / 2 + 18 &&
+                    y >= height / 2 - 4 &&
+                    y <= height / 2 + 4;
+
+                bool horizontalPanel = y == 18 || y == 44;
+
+                if (border) color = new Color(45, 28, 12, 255);
+                else if (centerLine) color = new Color(65, 40, 18, 255);
+                else if (handle) color = new Color(220, 180, 70, 255);
+                else if (horizontalPanel) color = new Color(70, 42, 18, 255);
+                else
+                {
+                    int variation = (x * 3 + y * 2) % 20;
+                    color = new Color(105 + variation, 62 + variation / 2, 28, 255);
+                }
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
     }
 
     public Texture2D GetWallTexture(int tileId)
