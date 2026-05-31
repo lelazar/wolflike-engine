@@ -2,6 +2,23 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.23] - Doors and Interactions
+
+### Added
+- Added door tile type
+- Added `D` level symbol for closed doors
+- Added door texture
+- Added map tile mutation through `WorldMap.SetTile`
+- Added `WorldMap.IsDoor` and `WorldMap.OpenDoor`
+- Added interaction key with `F`
+- Added door detection in front of the player
+- Added interaction prompt
+- Added interaction debug HUD state
+
+### Changed
+- Closed doors now behave like solid wall tiles until opened
+- Restart reloads closed doors from the level file
+
 ## [v0.22] - Ammo System and Ammo Pickups
 
 ### Added
