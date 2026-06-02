@@ -2,6 +2,25 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.24] - Keys and Locked Doors
+
+### Added
+- Added key pickup entity support
+- Added `K` level symbol for key pickups
+- Added locked door tile type
+- Added `L` level symbol for locked doors
+- Added key inventory to player
+- Added key pickup collection logic
+- Added locked door interaction logic
+- Added locked door texture
+- Added key pickup sprite
+- Added key counter HUD
+- Added locked-door interaction prompts
+
+### Changed
+- Door interaction now distinguishes normal and locked doors
+- Locked doors require and consume one key to open
+
 ## [v0.23] - Doors and Interactions
 
 ### Added
