@@ -7,9 +7,9 @@ namespace WolfLike.src.Entities;
 
 public class Player
 {
-    private const float DAMAGEFLASHDURATIONSECONDS = 0.18f;
-    private const float INVULNERABILITYDURATIONSECONDS = 0.75f;
-    private const float HEALFLASHDURATIONSECONDS = 0.18f;
+    private const float DAMAGE_FLASH_DURATION_SECONDS = 0.18f;
+    private const float INVULNERABILITY_DURATION_SECONDS = 0.75f;
+    private const float HEAL_FLASH_DURATION_SECONDS = 0.18f;
 
     private float _damageFlashTimer;
     private float _invulnerabilityTimer;
@@ -17,6 +17,7 @@ public class Player
 
     public Vector2 Position { get; private set; }
     public float Angle { get; private set; }
+    public int KeysForDoors { get; private set; }
     public float MoveSpeed { get; set; } = 3.0f;
     public float RotationSpeed { get; set; } = 2.5f;
     public int MaxHealth { get; private set; } = 100;
@@ -53,8 +54,8 @@ public class Player
 
         if (Health < 0) Health = 0;
 
-        _damageFlashTimer = DAMAGEFLASHDURATIONSECONDS;
-        _invulnerabilityTimer = INVULNERABILITYDURATIONSECONDS;
+        _damageFlashTimer = DAMAGE_FLASH_DURATION_SECONDS;
+        _invulnerabilityTimer = INVULNERABILITY_DURATION_SECONDS;
     }
 
     private void UpdateStatusTimers(float deltaTime)
@@ -125,8 +126,22 @@ public class Player
 
         if (Health > MaxHealth) Health = MaxHealth;
 
-        _healFlashTimer = HEALFLASHDURATIONSECONDS;
+        _healFlashTimer = HEAL_FLASH_DURATION_SECONDS;
 
+        return true;
+    }
+
+    public void AddKey(int amount = 1)
+    {
+        if (amount <= 0) return;
+        KeysForDoors += amount;
+    }
+
+    public bool TryUseKey()
+    {
+        if (KeysForDoors <= 0) return false;
+
+        KeysForDoors--;
         return true;
     }
 }

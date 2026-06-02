@@ -90,6 +90,10 @@ public class LevelLoader
             case 'D':
                 levelData.Tiles[y, x] = 4;
                 break;
+
+            case 'L':
+                levelData.Tiles[y, x] = 5;
+                break;
             #endregion
 
             #region Entity symbols
@@ -142,6 +146,16 @@ public class LevelLoader
                     new LevelEntitySpawn(
                         ToCenteredWorldPosition(x, y),
                         LevelEntityType.AmmoPickup
+                    )
+                );
+            break;
+
+            case 'K':
+                levelData.Tiles[y, x] = 0;
+                levelData.EntitySpawns.Add(
+                    new LevelEntitySpawn(
+                        ToCenteredWorldPosition(x, y),
+                        LevelEntityType.KeyPickup
                     )
                 );
             break;

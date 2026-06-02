@@ -66,7 +66,7 @@ public class Engine
                 AppContext.BaseDirectory,
                 "Content",
                 "Maps",
-                GameSettings.DEFAULTLEVELFILE
+                GameSettings.DEFAULT_LEVEL_FILE
             );
 
         LevelData levelData = _levelLoader.LoadFromFile(levelPath);
@@ -79,7 +79,7 @@ public class Engine
 
         _weapon = new();
 
-        _rayHits = new RaycastHit[GameSettings.RAYCOUNT];
+        _rayHits = new RaycastHit[GameSettings.RAY_COUNT];
 
         _sprites = CreateSpritesFromLevel(levelData);
 
@@ -168,18 +168,17 @@ public class Engine
 
     public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
     {
-        // Show "Press F to open door" when the player is looking at a door
-        bool canInteract = _gameState == GameState.Playing &&
-            FindDoorInFrontOfPlayer() != null;
+        string interactionPrompt = GetInteractionPrompt();
+        bool canInteract = !string.IsNullOrWhiteSpace(interactionPrompt);
 
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState, canInteract);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState, interactionPrompt);
     }
 
     // Calculating many ray angles
     private void CastFieldOfViewRays()
     {
-        float startAngle = _player.Angle - GameSettings.FIELDOFVIEW / 2.0f;  // Starts the first ray on the left side of the player's view
-        float angleStep = GameSettings.FIELDOFVIEW / (_rayHits.Length - 1);  // How much angle difference exists between each ray
+        float startAngle = _player.Angle - GameSettings.FIELD_OF_VIEW / 2.0f;  // Starts the first ray on the left side of the player's view
+        float angleStep = GameSettings.FIELD_OF_VIEW / (_rayHits.Length - 1);  // How much angle difference exists between each ray
 
         for (int i = 0; i < _rayHits.Length; i++)
         {
@@ -392,6 +391,8 @@ public class Engine
 
                 LevelEntityType.AmmoPickup => CreateAmmoPickup(spawn.Position),
 
+                LevelEntityType.KeyPickup => CreateKeyPickup(spawn.Position),
+
                 _ => throw new InvalidOperationException(
                     $"Unsupported entity spawn type: {spawn.EntityType}"
                 )
@@ -425,6 +426,11 @@ public class Engine
                 wasCollected = _player.Heal(sprite.HealAmount);
             else if (sprite.IsAmmoPickup)
                 wasCollected = _weapon.AddAmmo(sprite.AmmoAmount);
+            else if (sprite.IsKeyPickup)
+            {
+                _player.AddKey(sprite.KeyAmount);
+                wasCollected = true;  // Key pickups are always consumed because keys are always useful
+            }
 
             if (wasCollected)
                 sprite.IsVisible = false;
@@ -433,13 +439,25 @@ public class Engine
 
     private void TryInteract()
     {
+        // Behavior: Normal door opens immediately
+        // Locked door: If player has key, consume it and open door, else do nothing
+
         if (!_player.IsAlive) return;
 
         Point? doorTile = FindDoorInFrontOfPlayer();
 
         if (doorTile == null) return;
 
-        _worldMap.OpenDoor(doorTile.Value.X, doorTile.Value.Y);
+        int doorX = doorTile.Value.X;
+        int doorY = doorTile.Value.Y;
+
+        if (_worldMap.IsLockedDoor(doorX, doorY))
+        {
+            bool usedKey = _player.TryUseKey();
+            if (!usedKey) return;
+        }
+
+        _worldMap.OpenDoor(doorX, doorY);
 
         CastFieldOfViewRays();
     }
@@ -472,5 +490,27 @@ public class Engine
         }
 
         return null;
+    }
+
+    private SpriteEntity CreateKeyPickup(Vector2 position) => new SpriteEntity(position, 4) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsHealingPickup = false, IsAmmoPickup = false, IsKeyPickup = true, KeyAmount = 1, CollisionRadius = 0.35f };
+
+    private string GetInteractionPrompt()
+    {
+        if (_gameState != GameState.Playing) return string.Empty;
+
+        Point? doorTile = FindDoorInFrontOfPlayer();
+        if (doorTile == null) return string.Empty;
+
+        int doorX = doorTile.Value.X;
+        int doorY = doorTile.Value.Y;
+
+        if (_worldMap.IsLockedDoor(doorX, doorY))
+        {
+            if (_player.KeysForDoors > 0)
+                return "Press F to unlock door";
+            return "Locked door requires a key";
+        }
+
+        return "Press F to open door";
     }
 }

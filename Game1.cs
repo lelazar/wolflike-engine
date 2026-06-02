@@ -19,8 +19,8 @@ namespace WolfLike
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
-            _graphics.PreferredBackBufferWidth = GameSettings.SCREENWIDTH;
-            _graphics.PreferredBackBufferHeight = GameSettings.SCREENHEIGHT;
+            _graphics.PreferredBackBufferWidth = GameSettings.SCREEN_WIDTH;
+            _graphics.PreferredBackBufferHeight = GameSettings.SCREEN_HEIGHT;
         }
 
         protected override void Initialize()

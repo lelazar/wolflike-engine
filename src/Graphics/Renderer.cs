@@ -26,7 +26,7 @@ public class Renderer
     private TextureManager _textureManager;
     private SpriteFont _debugFont;
 
-    private const int TILESIZE = 48;
+    private const int TILE_SIZE = 48;
 
     public void LoadContent(GraphicsDevice graphicsDevice, ContentManager content)
     {
@@ -39,7 +39,7 @@ public class Renderer
         _debugFont = content.Load<SpriteFont>("DebugFont");
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState, bool canInteract)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState, string interactionPrompt)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
@@ -59,8 +59,9 @@ public class Renderer
         DrawHitMarker(spriteBatch, weapon);
         DrawPlayerHealthBar(spriteBatch, player);
         DrawAmmoCounter(spriteBatch, weapon);
+        DrawKeyCounter(spriteBatch, player);
         DrawNoAmmoWarning(spriteBatch, weapon);
-        DrawInteractionPrompt(spriteBatch, canInteract);
+        DrawInteractionPrompt(spriteBatch, interactionPrompt);
         DrawDamageOverlay(spriteBatch, player);
         DrawHealOverlay(spriteBatch, player);
         DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
@@ -73,20 +74,20 @@ public class Renderer
         spriteBatch.End();
     }
 
-    private void DrawInteractionPrompt(SpriteBatch spriteBatch, bool canInteract)
+    private void DrawInteractionPrompt(SpriteBatch spriteBatch, string interactionPrompt)
     {
         // When the player looks at a door, the prompt appears
 
-        if (!canInteract) return;
+        if (string.IsNullOrWhiteSpace(interactionPrompt)) return;
         if (_debugFont == null) return;
 
-        string text = "Press F to open door";
+        string text = interactionPrompt;
 
         Vector2 size = _debugFont.MeasureString(text);
 
         Vector2 position = new Vector2(
-            GameSettings.SCREENWIDTH / 2f - size.X / 2f,
-            GameSettings.SCREENHEIGHT / 2f + 80
+            GameSettings.SCREEN_WIDTH / 2f - size.X / 2f,
+            GameSettings.SCREEN_HEIGHT / 2f + 80
         );
 
         Rectangle backgroundRectangle = new Rectangle(
@@ -103,8 +104,8 @@ public class Renderer
 
     private void DrawCeilingAndFloor(SpriteBatch spriteBatch)
     {
-        Rectangle ceilingRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT / 2);
-        Rectangle floorRectangle = new Rectangle(0, GameSettings.SCREENHEIGHT / 2, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT / 2);
+        Rectangle ceilingRectangle = new Rectangle(0, 0, GameSettings.SCREEN_WIDTH, GameSettings.SCREEN_HEIGHT / 2);
+        Rectangle floorRectangle = new Rectangle(0, GameSettings.SCREEN_HEIGHT / 2, GameSettings.SCREEN_WIDTH, GameSettings.SCREEN_HEIGHT / 2);
 
         spriteBatch.Draw(_pixel, ceilingRectangle, new Color(22, 24, 38));
         spriteBatch.Draw(_pixel, floorRectangle, new Color(38, 38, 42));
@@ -115,7 +116,7 @@ public class Renderer
         if (rayHits == null || rayHits.Length == 0) return;
 
         int rayCount = rayHits.Length;
-        float sliceWidth = (float)GameSettings.SCREENWIDTH / rayCount;  // Controls how wide each vertical slice is. If SCREENWIDTH=1280, rayCount=320 then sliceWidth = 4 pixels
+        float sliceWidth = (float)GameSettings.SCREEN_WIDTH / rayCount;  // Controls how wide each vertical slice is. If SCREENWIDTH=1280, rayCount=320 then sliceWidth = 4 pixels
         // So every ray draws a 4-pixel-wide vertical wall column
 
         for (int i = 0; i < rayCount; i++)
@@ -135,12 +136,12 @@ public class Renderer
                 correctedDistance = 0.0001f;
 
             // The heart of the renderer
-            float wallHeight = GameSettings.SCREENHEIGHT / correctedDistance;  // Objects closer to the camera appear larger. For example dist1 -> 720/1 = 720 pixels tall, dist2 -> 720/2 = 360 pixels tall
+            float wallHeight = GameSettings.SCREEN_HEIGHT / correctedDistance;  // Objects closer to the camera appear larger. For example dist1 -> 720/1 = 720 pixels tall, dist2 -> 720/2 = 360 pixels tall
             // With this, we can create the 3D illusion
 
             int sliceX = (int)(i * sliceWidth);
             int sliceHeight = (int)wallHeight;
-            int sliceY = GameSettings.SCREENHEIGHT / 2 - sliceHeight / 2;
+            int sliceY = GameSettings.SCREEN_HEIGHT / 2 - sliceHeight / 2;
 
             Rectangle destinationRectangle = new Rectangle(
                 sliceX,
@@ -200,7 +201,7 @@ public class Renderer
         float spriteAngle = MathF.Atan2(toSprite.Y, toSprite.X);
         float angleDifference = NormalizeAngle(spriteAngle - player.Angle);  // Decides left/right screen position
 
-        float halfFov = GameSettings.FIELDOFVIEW / 2.0f;
+        float halfFov = GameSettings.FIELD_OF_VIEW / 2.0f;
 
         if (angleDifference < -halfFov || angleDifference > halfFov)
             return;
@@ -212,13 +213,13 @@ public class Renderer
 
         Texture2D spriteTexture = _textureManager.GetSpriteTexture(sprite.SpriteId);
 
-        float screenXNormalized = 0.5f + angleDifference / GameSettings.FIELDOFVIEW;
-        int spriteScreenCenterX = (int)(screenXNormalized * GameSettings.SCREENWIDTH);
+        float screenXNormalized = 0.5f + angleDifference / GameSettings.FIELD_OF_VIEW;
+        int spriteScreenCenterX = (int)(screenXNormalized * GameSettings.SCREEN_WIDTH);
 
-        int projectedHeight = (int)(GameSettings.SCREENHEIGHT / perpendicularDistance * sprite.Scale);
+        int projectedHeight = (int)(GameSettings.SCREEN_HEIGHT / perpendicularDistance * sprite.Scale);
         int projectedWidth = projectedHeight;
 
-        int spriteTopY = GameSettings.SCREENHEIGHT / 2 - projectedHeight / 2;
+        int spriteTopY = GameSettings.SCREEN_HEIGHT / 2 - projectedHeight / 2;
         int spriteLeftX = spriteScreenCenterX - projectedWidth / 2;
 
         DrawSpriteWithDepthCheck(spriteBatch, spriteTexture, sprite, spriteLeftX, spriteTopY, projectedWidth, projectedHeight, perpendicularDistance, rayHits);
@@ -234,11 +235,11 @@ public class Renderer
         if (projectedWidth <= 0 || projectedHeight <= 0) 
             return;
 
-        float rayToScreenScale = (float)rayHits.Length / GameSettings.SCREENWIDTH;
+        float rayToScreenScale = (float)rayHits.Length / GameSettings.SCREEN_WIDTH;
 
         for (int screenX = spriteLeftX; screenX < spriteLeftX + projectedWidth; screenX++)
         {
-            if (screenX < 0 || screenX >= GameSettings.SCREENWIDTH)
+            if (screenX < 0 || screenX >= GameSettings.SCREEN_WIDTH)
                 continue;
 
             int rayIndex = (int)(screenX * rayToScreenScale);
@@ -361,10 +362,10 @@ public class Renderer
                 };
 
                 Rectangle tileRectangle = new Rectangle(
-                    x * TILESIZE,
-                    y * TILESIZE,
-                    TILESIZE,
-                    TILESIZE
+                    x * TILE_SIZE,
+                    y * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
                 );
 
                 spriteBatch.Draw(_pixel, tileRectangle, color);
@@ -433,7 +434,7 @@ public class Renderer
         DrawLine(spriteBatch, start, end, Color.Yellow, 3);
     }
 
-    private Vector2 WorldToScreen(Vector2 worldPosition) => worldPosition * TILESIZE;
+    private Vector2 WorldToScreen(Vector2 worldPosition) => worldPosition * TILE_SIZE;
 
     private void DrawRectangleBorder(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
     {
@@ -475,8 +476,8 @@ public class Renderer
 
         int recoilOffsetY = weapon.IsMuzzleFlashVisible ? 18 : 0;  // When firing, the weapon moves slightly downward for a few frames, giving a simple recoil feeling
 
-        int weaponX = GameSettings.SCREENWIDTH / 2 - weaponWidth / 2;
-        int weaponY = GameSettings.SCREENHEIGHT - weaponHeight + 40 + recoilOffsetY;  // Slightly lower so it feels like it is coming from the bottom of the screen
+        int weaponX = GameSettings.SCREEN_WIDTH / 2 - weaponWidth / 2;
+        int weaponY = GameSettings.SCREEN_HEIGHT - weaponHeight + 40 + recoilOffsetY;  // Slightly lower so it feels like it is coming from the bottom of the screen
 
         Rectangle weaponDestination = new Rectangle(weaponX, weaponY, weaponWidth, weaponHeight);
 
@@ -493,8 +494,8 @@ public class Renderer
         int flashWidth = flashTexture.Width * 2;
         int flashHeight = flashTexture.Height * 2;
 
-        int flashX = GameSettings.SCREENWIDTH / 2 - flashWidth / 2;
-        int flashY = GameSettings.SCREENHEIGHT - 420;  // TODO: Tune this number depending on how the weapon appears
+        int flashX = GameSettings.SCREEN_WIDTH / 2 - flashWidth / 2;
+        int flashY = GameSettings.SCREEN_HEIGHT - 420;  // TODO: Tune this number depending on how the weapon appears
         // If the flash is too high or too low, adjust it:
         // lower flash  -> larger Y value
         // higher flash -> smaller Y value
@@ -508,8 +509,8 @@ public class Renderer
     {
         // This method gives us a simple FPS-style crosshair
 
-        int centerX = GameSettings.SCREENWIDTH / 2;
-        int centerY = GameSettings.SCREENHEIGHT / 2;
+        int centerX = GameSettings.SCREEN_WIDTH / 2;
+        int centerY = GameSettings.SCREEN_HEIGHT / 2;
 
         int gap = 6;
         int length = 10;
@@ -549,8 +550,8 @@ public class Renderer
         if (weapon == null || !weapon.IsHitMarkerVisible)
             return;
 
-        int centerX = GameSettings.SCREENWIDTH / 2;
-        int centerY = GameSettings.SCREENHEIGHT / 2;
+        int centerX = GameSettings.SCREEN_WIDTH / 2;
+        int centerY = GameSettings.SCREEN_HEIGHT / 2;
 
         int offset = 12;
         int length = 10;
@@ -645,7 +646,7 @@ public class Renderer
 
         int barWidth = 240, barHeight = 22;
 
-        int x = 24, y = GameSettings.SCREENHEIGHT - 48;
+        int x = 24, y = GameSettings.SCREEN_HEIGHT - 48;
 
         float healthRatio = player.Health / (float)player.MaxHealth;
         healthRatio = MathHelper.Clamp(healthRatio, 0.0f, 1.0f);
@@ -665,7 +666,7 @@ public class Renderer
 
         if (!player.IsDamageFlashVisible) return;
 
-        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREEN_WIDTH, GameSettings.SCREEN_HEIGHT);
 
         spriteBatch.Draw(_pixel, screenRectangle, new Color(180, 0, 0, 80));
     }
@@ -676,7 +677,7 @@ public class Renderer
 
         if (player.IsAlive) return;
 
-        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREEN_WIDTH, GameSettings.SCREEN_HEIGHT);
 
         spriteBatch.Draw(_pixel, screenRectangle, new Color(0, 0, 0, 180));
     }
@@ -686,7 +687,7 @@ public class Renderer
         if (gameState == GameState.Playing)
             return;
 
-        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREENWIDTH, GameSettings.SCREENHEIGHT);
+        Rectangle screenRectangle = new Rectangle(0, 0, GameSettings.SCREEN_WIDTH, GameSettings.SCREEN_HEIGHT);
 
         Color overlayColor = gameState switch
         {
@@ -709,8 +710,8 @@ public class Renderer
 
         string subtitle = "Press R to restart";
 
-        DrawCenterText(spriteBatch, title, GameSettings.SCREENHEIGHT / 2 - 40, 2.0f);
-        DrawCenterText(spriteBatch, subtitle, GameSettings.SCREENHEIGHT / 2 + 20, 1.0f);
+        DrawCenterText(spriteBatch, title, GameSettings.SCREEN_HEIGHT / 2 - 40, 2.0f);
+        DrawCenterText(spriteBatch, subtitle, GameSettings.SCREEN_HEIGHT / 2 + 20, 1.0f);
     }
 
     private void DrawCenterText(SpriteBatch spriteBatch, string text, int y, float scale)
@@ -720,7 +721,7 @@ public class Renderer
 
         Vector2 size = _debugFont.MeasureString(text) * scale;
 
-        Vector2 position = new Vector2(GameSettings.SCREENWIDTH / 2f - size.X / 2f);
+        Vector2 position = new Vector2(GameSettings.SCREEN_WIDTH / 2f - size.X / 2f);
 
         spriteBatch.DrawString(_debugFont, text, position, Color.White, 0.0f, Vector2.Zero, scale, SpriteEffects.None, 0.0f);
     }
@@ -734,8 +735,8 @@ public class Renderer
         Rectangle screenRectangle = new Rectangle(
                 0,
                 0,
-                GameSettings.SCREENWIDTH,
-                GameSettings.SCREENHEIGHT
+                GameSettings.SCREEN_WIDTH,
+                GameSettings.SCREEN_HEIGHT
             );
     }
 
@@ -749,8 +750,8 @@ public class Renderer
 
         Vector2 size = _debugFont.MeasureString(ammoText);
 
-        Vector2 position = new Vector2(GameSettings.SCREENWIDTH - size.X - 24,
-            GameSettings.SCREENHEIGHT - 48);
+        Vector2 position = new Vector2(GameSettings.SCREEN_WIDTH - size.X - 24,
+            GameSettings.SCREEN_HEIGHT - 48);
 
         Rectangle backgroundRectangle = new Rectangle(
             (int)position.X - 8,
@@ -777,9 +778,46 @@ public class Renderer
 
         Vector2 size = _debugFont.MeasureString(text);
 
-        Vector2 position = new Vector2(GameSettings.SCREENWIDTH / 2f - size.X / 2f,
-            GameSettings.SCREENHEIGHT / 2f + 44);
+        Vector2 position = new Vector2(GameSettings.SCREEN_WIDTH / 2f - size.X / 2f,
+            GameSettings.SCREEN_HEIGHT / 2f + 44);
 
         spriteBatch.DrawString(_debugFont, text, position, new Color(230, 60, 60));
+    }
+
+    private void DrawKeyCounter(SpriteBatch spriteBatch, Player player)
+    {
+        // With this method, keys appear above ammo in the lower-right HUD
+
+        if (_debugFont == null || player == null)
+            return;
+
+        string keyText = $"KEYS {player.KeysForDoors}";
+
+        Vector2 size = _debugFont.MeasureString(keyText);
+
+        Vector2 position = new Vector2(
+            GameSettings.SCREEN_WIDTH - size.X - 24,
+            GameSettings.SCREEN_HEIGHT - 82
+        );
+
+        Rectangle backgroundRectangle = new Rectangle(
+            (int)position.X - 8,
+            (int)position.Y - 6,
+            (int)size.X + 16,
+            (int)size.Y + 12
+        );
+
+        spriteBatch.Draw(
+            _pixel,
+            backgroundRectangle,
+            new Color(0, 0, 0, 180)
+        );
+
+        spriteBatch.DrawString(
+            _debugFont,
+            keyText,
+            position,
+            new Color(235, 200, 70)
+        );
     }
 }

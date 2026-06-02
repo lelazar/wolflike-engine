@@ -6,5 +6,6 @@ public enum LevelEntityType
     ToughEnemy,
     FastEnemy,
     HealingPickup,
-    AmmoPickup
+    AmmoPickup,
+    KeyPickup
 }

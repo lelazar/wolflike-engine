@@ -13,7 +13,7 @@ namespace WolfLike.src.Entities;
 
 public class SpriteEntity
 {
-    private const float DAMAGEFLASHDURATIONSECONDS = 0.15f;
+    private const float DAMAGE_FLASH_DURATION_SECONDS = 0.15f;
     private float _damageFlashTimer;
 
     public Vector2 Position { get; set; }
@@ -32,11 +32,17 @@ public class SpriteEntity
     public float DetectionRange { get; set; } = 6.0f;
     public float MoveSpeed { get; set; } = 1.25f;
     public float StopDistance { get; set; } = 0.7f;
+    
+
+    #region Pickup properties
     public bool IsPickup { get; set; }  // generic pickup
-    public int HealAmount { get; set; }
-    public bool IsAmmoPickup { get; set; }  // ammo pickup
     public bool IsHealingPickup { get; set; }  // healing pickup
+    public bool IsAmmoPickup { get; set; }  // ammo pickup
+    public int HealAmount { get; set; }
     public int AmmoAmount { get; set; }
+    public bool IsKeyPickup { get; set; }
+    public int KeyAmount { get; set; }
+    #endregion
 
     public SpriteEntity(Vector2 position, int spriteId)
     {
@@ -84,7 +90,7 @@ public class SpriteEntity
             return;
 
         Health -= damage;
-        _damageFlashTimer = DAMAGEFLASHDURATIONSECONDS;
+        _damageFlashTimer = DAMAGE_FLASH_DURATION_SECONDS;
 
         if (Health <= 0)
         {

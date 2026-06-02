@@ -23,19 +23,134 @@ public class TextureManager
 
     public void LoadContent(GraphicsDevice graphicsDevice)
     {
-        int size = GameSettings.TEXTURESIZE;
+        int size = GameSettings.TEXTURE_SIZE;
 
         _wallTextures[1] = CreateStoneTexture(graphicsDevice, size, size);
         _wallTextures[2] = CreateBrickTexture(graphicsDevice, size, size);
         _wallTextures[3] = CreateMetalTexture(graphicsDevice, size, size);
         _wallTextures[4] = CreateDoorTexture(graphicsDevice, size, size);
+        _wallTextures[5] = CreateLockedDoorTexture(graphicsDevice, size, size);
 
         _spriteTextures[1] = CreateEnemyPlaceholderTexture(graphicsDevice, size, size);
         _spriteTextures[2] = CreatePickupPlaceholderTexture(graphicsDevice, size, size);
         _spriteTextures[3] = CreateAmmoPickupTexture(graphicsDevice, size, size);
+        _spriteTextures[4] = CreateKeyPickupTexture(graphicsDevice, size, size);
 
         _weaponTextures[1] = CreateWeaponPlaceholderTexture(graphicsDevice, 160, 120);
         _weaponTextures[2] = CreateMuzzleFlashTexture(graphicsDevice, 96, 96);
+    }
+
+    private Texture2D CreateKeyPickupTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color = Color.Transparent;
+
+                Vector2 center = new Vector2(width / 2f, height / 2f);
+
+                float ringDistance = Vector2.Distance(new Vector2(x, y), new Vector2(24, 30));
+
+                bool ring =
+                    ringDistance >= 8 &&
+                    ringDistance <= 13;
+
+                bool shaft =
+                    x >= 32 && x <= 52 &&
+                    y >= 28 && y <= 34;
+
+                bool toothOne =
+                    x >= 46 && x <= 52 &&
+                    y >= 34 && y <= 42;
+
+                bool toothTwo =
+                    x >= 38 && x <= 44 &&
+                    y >= 34 && y <= 39;
+
+                bool shine =
+                    x >= 20 && x <= 28 &&
+                    y >= 20 && y <= 23;
+
+                if (ring || shaft || toothOne || toothTwo)
+                {
+                    color = new Color(235, 190, 55, 255);
+                }
+
+                if (shine)
+                {
+                    color = new Color(255, 240, 140, 255);
+                }
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
+    }
+
+    private Texture2D CreateLockedDoorTexture(GraphicsDevice graphicsDevice, int width, int height)
+    {
+        Texture2D texture = new Texture2D(graphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color color;
+
+                bool border =
+                    x < 4 || x >= width - 4 ||
+                    y < 4 || y >= height - 4;
+
+                bool centerLine =
+                    x >= width / 2 - 1 &&
+                    x <= width / 2 + 1;
+
+                bool handle =
+                    x >= width / 2 + 12 &&
+                    x <= width / 2 + 18 &&
+                    y >= height / 2 - 4 &&
+                    y <= height / 2 + 4;
+
+                bool lockPlate =
+                    x >= width / 2 - 8 &&
+                    x <= width / 2 + 8 &&
+                    y >= height / 2 - 8 &&
+                    y <= height / 2 + 10;
+
+                bool keyHole =
+                    x >= width / 2 - 2 &&
+                    x <= width / 2 + 2 &&
+                    y >= height / 2 - 2 &&
+                    y <= height / 2 + 8;
+
+                bool horizontalPanel =
+                    y == 18 || y == 44;
+
+                if (border) color = new Color(35, 20, 10, 255);
+                else if (lockPlate) color = new Color(190, 150, 55, 255);
+                else if (keyHole) color = new Color(25, 20, 10, 255);
+                else if (centerLine) color = new Color(55, 32, 16, 255);
+                else if (handle) color = new Color(220, 180, 70, 255);
+                else if (horizontalPanel) color = new Color(70, 42, 18, 255);
+                else
+                {
+                    int variation = (x * 3 + y * 2) % 20;
+                    color = new Color(92 + variation, 50 + variation / 2, 24, 255);
+                }
+
+                data[y * width + x] = color;
+            }
+        }
+
+        texture.SetData(data);
+        return texture;
     }
 
     private Texture2D CreateDoorTexture(GraphicsDevice graphicsDevice, int width, int height)

@@ -91,7 +91,7 @@ public class Raycaster
 
             float approximateDistance = Vector2.Distance(origin, new Vector2(mapX, mapY));
 
-            if (approximateDistance > GameSettings.MAXRAYDISTANCE) return CreateMissResult(origin, rayDirection, angle);
+            if (approximateDistance > GameSettings.MAX_RAY_DISTANCE) return CreateMissResult(origin, rayDirection, angle);
         }
 
         float perpendicularWallDistance;
@@ -138,13 +138,13 @@ public class Raycaster
 
     private RaycastHit CreateMissResult(Vector2 origin, Vector2 rayDirection, float angle)
     {
-        Vector2 endPosition = origin + rayDirection * GameSettings.MAXRAYDISTANCE;
+        Vector2 endPosition = origin + rayDirection * GameSettings.MAX_RAY_DISTANCE;
 
         return new RaycastHit
         {
             HitWall = false,
             Position = endPosition,
-            Distance = GameSettings.MAXRAYDISTANCE,
+            Distance = GameSettings.MAX_RAY_DISTANCE,
             Angle = angle,
             RayDirection = rayDirection,
             MapX = (int)endPosition.X,

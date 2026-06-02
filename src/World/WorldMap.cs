@@ -48,7 +48,16 @@ public class WorldMap
         return IsWall(mapX, mapY);
     }
 
-    public bool IsDoor(int x, int y) => GetTile(x, y) == 4;
+    public bool IsDoor(int x, int y) 
+    {
+        int tileId = GetTile(x, y);
+
+        return tileId == 4 || tileId == 5;
+    }
+
+    public bool IsNormalDoor(int x, int y) => GetTile(x, y) == 4;
+
+    public bool IsLockedDoor(int x, int y) => GetTile(x, y) == 5;
 
     public void OpenDoor(int x, int y)
     {

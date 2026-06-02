@@ -4,20 +4,22 @@
 # 2 = brick wall
 # 3 = metal wall
 # D = door
+# L = locked door
 # P = player start
 # E = standard enemy
 # T = tough enemy
 # F = fast enemy
 # H = healing pickup
 # A = ammo pickup
+# K = key pickup
 
 111111111111
 100000000001
 10F020003T01
 100020003001
 100020003001
-100000100001
-10011D101101
+100K00100001
+10011L101101
 100000A00001
 10200H000301
 102P0000E301
