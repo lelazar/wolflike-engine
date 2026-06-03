@@ -10,12 +10,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using WolfLike.src.Core;
 using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
+using WolfLike.src.UI;
 using WolfLike.src.World;
 
 namespace WolfLike.src.Graphics;
@@ -39,7 +41,7 @@ public class Renderer
         _debugFont = content.Load<SpriteFont>("DebugFont");
     }
 
-    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState, string interactionPrompt)
+    public void DrawRaycastView(SpriteBatch spriteBatch, WorldMap worldMap, Player player, RaycastHit[] rayHits, List<SpriteEntity> sprites, Weapon weapon, GameState gameState, string interactionPrompt, MessageLog messageLog)
     {
         //spriteBatch.Begin(blendState: BlendState.AlphaBlend);
         spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.PointClamp);  // PointClamp is important for retro pixel-style rendering
@@ -62,6 +64,7 @@ public class Renderer
         DrawKeyCounter(spriteBatch, player);
         DrawNoAmmoWarning(spriteBatch, weapon);
         DrawInteractionPrompt(spriteBatch, interactionPrompt);
+        DrawMessages(spriteBatch, messageLog);
         DrawDamageOverlay(spriteBatch, player);
         DrawHealOverlay(spriteBatch, player);
         DrawDeathOverlay(spriteBatch, player);  // TODO: Remove it later because DrawGameStateOverlay() will be used
@@ -612,12 +615,8 @@ public class Renderer
 
         string debugText =
             $"Game State: {gameState}\n" +
-            $"Player X: {player.Position.X:0.00}\n" +
-            $"Player Y: {player.Position.Y:0.00}\n" +
-            $"Angle: {MathHelper.ToDegrees(player.Angle):0.0} deg\n" +
             $"Player HP: {player.Health}/{player.MaxHealth}\n" +
             $"Ammo: {weapon.Ammo}/{weapon.MaxAmmo}\n" +
-            $"Invulnerable: {player.IsInvulnerable}\n" +
             $"Visible Sprites: {visibleSprites}\n" +
             $"Alive Enemies: {damageableSprites}\n" +
             $"AI Enemies: {aiSprites}\n" +
@@ -819,5 +818,58 @@ public class Renderer
             position,
             new Color(235, 200, 70)
         );
+    }
+
+    private void DrawMessages(SpriteBatch spriteBatch, MessageLog messageLog)
+    {
+        // This function creates a small fading message stack
+
+        if (_debugFont == null)
+            return;
+        if (messageLog == null || messageLog.Messages.Count == 0)
+            return;
+
+        int startY = 90, spacing = 28;
+
+        for (int i = 0;  i < messageLog.Messages.Count; i++)
+        {
+            GameMessage message = messageLog.Messages[i];
+
+            string text = message.Text;
+
+            Vector2 size = _debugFont.MeasureString(text);
+
+            float alpha = MathHelper.Clamp(message.NormalizedLifetime * 2.0f, 0.0f, 1.0f);
+
+            Vector2 position = new Vector2(
+                GameSettings.SCREEN_WIDTH / 2f - size.X / 2f,
+                startY + i * spacing
+            );
+
+            Rectangle backgroundRectangle = new Rectangle(
+                (int)position.X - 8,
+                (int)position.Y - 5,
+                (int)size.X + 16,
+                (int)size.Y + 10
+            );
+
+            Color backgroundColor = new Color(
+                0,
+                0,
+                0,
+                (150 * alpha)
+            );
+
+            Color textColor = new Color(
+                255,
+                255,
+                255,
+                (255 * alpha)
+            );
+
+            spriteBatch.Draw(_pixel, backgroundRectangle, backgroundColor);
+
+            spriteBatch.DrawString(_debugFont, text, position, textColor);
+        }
     }
 }

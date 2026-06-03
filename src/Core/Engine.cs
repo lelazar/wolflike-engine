@@ -10,6 +10,7 @@ using WolfLike.src.Entities;
 using WolfLike.src.Gameplay;
 using WolfLike.src.Graphics;
 using WolfLike.src.World;
+using WolfLike.src.UI;
 
 namespace WolfLike.src.Core;
 
@@ -26,8 +27,8 @@ public class Engine
     private List<SpriteEntity> _sprites;
 
     private Weapon _weapon;
-
     private LevelLoader _levelLoader;
+    private MessageLog _messageLog;
 
     public Player Player => _player;
     public IReadOnlyList<SpriteEntity> Sprites => _sprites;
@@ -49,6 +50,7 @@ public class Engine
         _renderer = new();
         _raycaster = new();
         _levelLoader = new();
+        _messageLog = new();
 
         StartNewGame();
 
@@ -61,6 +63,8 @@ public class Engine
     private void StartNewGame()
     {
         _gameState = GameState.Playing;
+
+        _messageLog.Clear();
 
         string levelPath = Path.Combine(
                 AppContext.BaseDirectory,
@@ -94,6 +98,8 @@ public class Engine
     public void Update(GameTime gameTime)
     {
         float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        _messageLog.Update(deltaTime);  // Messages should update even in death/victory state, so I place it before the game-state early return
 
         KeyboardState keyboard = Keyboard.GetState();
 
@@ -137,6 +143,8 @@ public class Engine
         {
             _weapon.Update(deltaTime);
 
+            if (_weapon.TriedToFireWithoutAmmo)
+                _messageLog.Add("No ammo");  // This may repeat if the player keeps pressing, but because the weapon has cooldown, it is manageable
             if (_weapon.IsFiring)
                 HandleWeaponFire();  // When the weapon fires, the engine checks for a target
         }
@@ -171,7 +179,7 @@ public class Engine
         string interactionPrompt = GetInteractionPrompt();
         bool canInteract = !string.IsNullOrWhiteSpace(interactionPrompt);
 
-        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState, interactionPrompt);
+        _renderer.DrawRaycastView(spriteBatch, _worldMap, _player, _rayHits, _sprites, _weapon, _gameState, interactionPrompt, _messageLog);
     }
 
     // Calculating many ray angles
@@ -340,7 +348,7 @@ public class Engine
         return enemy;
     }
 
-    private SpriteEntity CreateHealingPickup(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsAmmoPickup = false, HealAmount = 25, CollisionRadius = 0.35f };
+    private SpriteEntity CreateHealingPickup(Vector2 position) => new SpriteEntity(position, 2) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsAmmoPickup = false, IsHealingPickup = true, HealAmount = 25, CollisionRadius = 0.35f };
 
     private SpriteEntity CreateAmmoPickup(Vector2 position) => new SpriteEntity(position, 3) { Scale = 0.65f, IsDamageable = false, IsAiControlled = false, IsPickup = true, IsAmmoPickup = true, AmmoAmount = 6, CollisionRadius = 0.35f };
 
@@ -408,32 +416,71 @@ public class Engine
 
     private void HandlePickupCollection()
     {
-        if (!_player.IsAlive) return;
+        if (!_player.IsAlive)
+            return;
 
         foreach (SpriteEntity sprite in _sprites)
         {
-            if (!sprite.IsVisible) continue;
-            if (!sprite.IsPickup) continue;
+            if (!sprite.IsVisible)
+                continue;
+
+            if (!sprite.IsPickup)
+                continue;
 
             float distance = Vector2.Distance(_player.Position, sprite.Position);
 
-            // Add + 0.25f because this gives a reasonable pickup radius without needing a separate property yet
-            if (distance > sprite.CollisionRadius + 0.25f) continue;
+            if (distance > sprite.CollisionRadius + 0.25f)
+                continue;
 
             bool wasCollected = false;
 
             if (sprite.IsHealingPickup)
+            {
                 wasCollected = _player.Heal(sprite.HealAmount);
+
+                if (wasCollected)
+                {
+                    _messageLog.Add($"Picked up health +{sprite.HealAmount}");
+                }
+                else if (sprite.CanShowFeedback())
+                {
+                    _messageLog.Add("Health already full");
+                    sprite.ResetFeedbackCooldown();
+                }
+            }
             else if (sprite.IsAmmoPickup)
+            {
                 wasCollected = _weapon.AddAmmo(sprite.AmmoAmount);
+
+                if (wasCollected)
+                {
+                    _messageLog.Add($"Picked up ammo +{sprite.AmmoAmount}");
+                }
+                else if (sprite.CanShowFeedback())
+                {
+                    _messageLog.Add("Ammo already full");
+                    sprite.ResetFeedbackCooldown();
+                }
+            }
             else if (sprite.IsKeyPickup)
             {
                 _player.AddKey(sprite.KeyAmount);
-                wasCollected = true;  // Key pickups are always consumed because keys are always useful
+                wasCollected = true;
+
+                if (sprite.KeyAmount == 1)
+                {
+                    _messageLog.Add("Picked up key");
+                }
+                else
+                {
+                    _messageLog.Add($"Picked up keys +{sprite.KeyAmount}");
+                }
             }
 
             if (wasCollected)
+            {
                 sprite.IsVisible = false;
+            }
         }
     }
 
@@ -451,15 +498,29 @@ public class Engine
         int doorX = doorTile.Value.X;
         int doorY = doorTile.Value.Y;
 
+        // Our doors can provide feedback
         if (_worldMap.IsLockedDoor(doorX, doorY))
         {
             bool usedKey = _player.TryUseKey();
-            if (!usedKey) return;
+
+            if (!usedKey)
+            {
+                _messageLog.Add("Need a key");
+                return;
+            }
+
+            _worldMap.OpenDoor(doorX, doorY);
+            _messageLog.Add("Door unlocked");
+            CastFieldOfViewRays();
+            return;
         }
 
-        _worldMap.OpenDoor(doorX, doorY);
-
-        CastFieldOfViewRays();
+        if (_worldMap.IsNormalDoor(doorX, doorY))
+        {
+            _worldMap.OpenDoor(doorX, doorY);
+            _messageLog.Add("Door opened");
+            CastFieldOfViewRays();
+        }
     }
 
     private Point? FindDoorInFrontOfPlayer()

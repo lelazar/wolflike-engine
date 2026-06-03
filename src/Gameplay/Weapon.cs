@@ -21,10 +21,10 @@ namespace WolfLike.src.Gameplay;
 
 public class Weapon
 {
-    private const float FIRECOOLDOWNSECONDS        = 0.35f;
-    private const float MUZZLEFLASHDURATIONSECONDS = 0.08f;
-    private const float HITMARKERDURATIONSECONDS   = 0.12f;
-    private const float EMPTYCLICKDURATIONSECONDS  = 0.10f;
+    private const float FIRE_COOLDOWN_SECONDS = 0.35f;
+    private const float MUZZLE_FLASH_DURATION_SECONDS = 0.08f;
+    private const float HITMARKER_DURATION_SECONDS = 0.12f;
+    private const float EMPTY_CLICK_DURATION_SECONDS = 0.10f;
 
     private float _cooldownTimer;
     private float _muzzleFlashTimer;
@@ -38,6 +38,7 @@ public class Weapon
     public int MaxAmmo { get; private set; } = 24;
     public int Ammo { get; private set; } = 12;
     public bool IsFiring { get; private set; }
+    public bool TriedToFireWithoutAmmo { get; private set; }
     public bool IsMuzzleFlashVisible => _muzzleFlashTimer > 0.0f;
     public bool IsHitMarkerVisible => _hitMarkerTimer > 0.0f;
     public bool IsEmptyClickVisible => _emptyClickTimer > 0.0f;
@@ -52,6 +53,7 @@ public class Weapon
     public void Update(float deltaTime)
     {
         IsFiring = false;
+        TriedToFireWithoutAmmo = false;
 
         if (_cooldownTimer > 0.0f)
             _cooldownTimer -= deltaTime;
@@ -89,7 +91,7 @@ public class Weapon
     public void RegisterHit()
     {
         // When an enemy is hit, the engine will call this method
-        _hitMarkerTimer = HITMARKERDURATIONSECONDS;
+        _hitMarkerTimer = HITMARKER_DURATION_SECONDS;
     }
 
     private void TryFire()
@@ -98,8 +100,9 @@ public class Weapon
 
         if (Ammo <= 0)
         {
-            _emptyClickTimer = EMPTYCLICKDURATIONSECONDS;
-            _cooldownTimer = FIRECOOLDOWNSECONDS * 0.5f;
+            TriedToFireWithoutAmmo = true;
+            _emptyClickTimer = EMPTY_CLICK_DURATION_SECONDS;
+            _cooldownTimer = FIRE_COOLDOWN_SECONDS * 0.5f;
             return;
         }
 
@@ -107,8 +110,8 @@ public class Weapon
 
         IsFiring = true;
 
-        _cooldownTimer = FIRECOOLDOWNSECONDS;
-        _muzzleFlashTimer = MUZZLEFLASHDURATIONSECONDS;
+        _cooldownTimer = FIRE_COOLDOWN_SECONDS;
+        _muzzleFlashTimer = MUZZLE_FLASH_DURATION_SECONDS;
     }
 
     private bool IsKeyPressed(KeyboardState keyboard, Keys key) => keyboard.IsKeyDown(key) && !_previousKeyboardState.IsKeyDown(key);

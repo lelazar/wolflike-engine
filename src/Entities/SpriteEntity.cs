@@ -14,6 +14,7 @@ namespace WolfLike.src.Entities;
 public class SpriteEntity
 {
     private const float DAMAGE_FLASH_DURATION_SECONDS = 0.15f;
+
     private float _damageFlashTimer;
 
     public Vector2 Position { get; set; }
@@ -32,7 +33,7 @@ public class SpriteEntity
     public float DetectionRange { get; set; } = 6.0f;
     public float MoveSpeed { get; set; } = 1.25f;
     public float StopDistance { get; set; } = 0.7f;
-    
+    public float FeedbackCooldownTimer { get; private set; }
 
     #region Pickup properties
     public bool IsPickup { get; set; }  // generic pickup
@@ -54,6 +55,8 @@ public class SpriteEntity
     {
         if (_damageFlashTimer > 0.0f)
             _damageFlashTimer -= deltaTime;
+        if (FeedbackCooldownTimer > 0.0f)
+            FeedbackCooldownTimer -= deltaTime;
     }
 
     public void UpdateAi(float deltaTime, Player player, WorldMap worldMap)
@@ -105,5 +108,14 @@ public class SpriteEntity
 
         MaxHealth = Math.Max(1, health);
         Health = MaxHealth;
+    }
+
+    public bool CanShowFeedback() => FeedbackCooldownTimer <= 0.0f;
+
+    public void ResetFeedbackCooldown(float duration = 0.75f)
+    {
+        // When a pickup cannot be collected, we can show "already full" only every 0.75 seconds
+
+        FeedbackCooldownTimer = duration;
     }
 }
