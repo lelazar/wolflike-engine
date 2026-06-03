@@ -2,6 +2,21 @@
 
 All notable changes to WolfEngine will be documented in this file.
 
+## [v0.25] - Door and Pickup Feedback Polish
+
+### Added
+- Added `GameMessage` and `MessageLog`
+- Added temporary on-screen notification messages
+- Added pickup feedback messages
+- Added door interaction feedback messages
+- Added no-ammo feedback message
+- Added enemy defeated message
+- Added feedback cooldown to prevent pickup message spam
+
+### Changed
+- Door and pickup interactions now provide player-facing feedback
+- UI feedback is now routed through a reusable message system
+
 ## [v0.24] - Keys and Locked Doors
 
 ### Added
